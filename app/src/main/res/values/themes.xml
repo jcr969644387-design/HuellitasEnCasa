@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.HuellitasEnCasa" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/huellitas_cream</item>
+        <item name="android:statusBarColor">@color/huellitas_orange</item>
+        <item name="android:navigationBarColor">@color/huellitas_cream</item>
+    </style>
+</resources>
