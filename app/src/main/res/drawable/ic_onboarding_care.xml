@@ -1,0 +1,16 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+    <!-- Corazon (dos circulos + rombo) que representa el cuidado y el cariño -->
+    <path android:pathData="M34,45 a13,13 0 1,0 26,0 a13,13 0 1,0 -26,0 Z" android:fillColor="#FF6B6B"/>
+    <path android:pathData="M60,45 a13,13 0 1,0 26,0 a13,13 0 1,0 -26,0 Z" android:fillColor="#FF6B6B"/>
+    <path android:pathData="M60,40 L78,58 L60,84 L42,58 Z" android:fillColor="#FF6B6B"/>
+    <!-- Huellita pequeña sobre el corazon -->
+    <path android:pathData="M52,64 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0 Z" android:fillColor="#FFF8F0"/>
+    <path android:pathData="M45,56 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 Z" android:fillColor="#FFF8F0"/>
+    <path android:pathData="M52,50 a3.6,3.6 0 1,0 7.2,0 a3.6,3.6 0 1,0 -7.2,0 Z" android:fillColor="#FFF8F0"/>
+    <path android:pathData="M60,50 a3.6,3.6 0 1,0 7.2,0 a3.6,3.6 0 1,0 -7.2,0 Z" android:fillColor="#FFF8F0"/>
+    <path android:pathData="M68,56 a3.4,3.4 0 1,0 6.8,0 a3.4,3.4 0 1,0 -6.8,0 Z" android:fillColor="#FFF8F0"/>
+</vector>

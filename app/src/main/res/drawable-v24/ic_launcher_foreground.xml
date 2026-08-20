@@ -3,9 +3,12 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path android:pathData="M54,66 a18,18 0 0,1 -18,-13 a11,9 0 0,1 36,0 a18,18 0 0,1 -18,13 Z" android:fillColor="#FF8A5B"/>
-    <path android:pathData="M34,38 a6,6 0 1,0 0.1,0 Z" android:fillColor="#FFFFFF"/>
-    <path android:pathData="M54,30 a6,6 0 1,0 0.1,0 Z" android:fillColor="#FFFFFF"/>
-    <path android:pathData="M74,38 a6,6 0 1,0 0.1,0 Z" android:fillColor="#FFFFFF"/>
-    <path android:pathData="M54,68 a9,9 0 1,0 0.1,0 Z" android:fillColor="#FFFFFF"/>
+    <!-- Almohadilla principal -->
+    <path android:pathData="M36,68 a18,14 0 1,0 36,0 a18,14 0 1,0 -36,0 Z" android:fillColor="#E06A3C"/>
+    <path android:pathData="M37,66 a17,13 0 1,0 34,0 a17,13 0 1,0 -34,0 Z" android:fillColor="#FF8A5B"/>
+    <!-- Dedos -->
+    <path android:pathData="M20,52 a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 Z" android:fillColor="#FF8A5B"/>
+    <path android:pathData="M35,34 a10,10 0 1,0 20,0 a10,10 0 1,0 -20,0 Z" android:fillColor="#FF8A5B"/>
+    <path android:pathData="M53,34 a10,10 0 1,0 20,0 a10,10 0 1,0 -20,0 Z" android:fillColor="#FF8A5B"/>
+    <path android:pathData="M69,52 a9,9 0 1,0 18,0 a9,9 0 1,0 -18,0 Z" android:fillColor="#FF8A5B"/>
 </vector>

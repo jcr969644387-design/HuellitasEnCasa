@@ -1,21 +1,28 @@
 package com.educalab.huellitasencasa.ui.screens.profile
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -36,13 +43,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.educalab.huellitasencasa.HuellitasApplication
 import com.educalab.huellitasencasa.data.repository.ProfileRepository
 import com.educalab.huellitasencasa.ui.components.AppLogo
+import com.educalab.huellitasencasa.ui.components.VetAvatarIllustration
+import com.educalab.huellitasencasa.ui.components.VetAvatarPresets
+import com.educalab.huellitasencasa.ui.theme.HuellitasOrange
 import com.educalab.huellitasencasa.util.AppViewModelFactory
 import kotlinx.coroutines.launch
-
-private val avatarPalette = listOf(
-    Color(0xFFFF8A5B), Color(0xFF4FB0A5), Color(0xFFFFC93C), Color(0xFF8E7CC3),
-    Color(0xFF5AC8FA), Color(0xFF6FCF97), Color(0xFFF2A6C0), Color(0xFFB5651D)
-)
 
 class ProfileSetupViewModel(private val repo: ProfileRepository) : ViewModel() {
     fun createProfile(alias: String, avatarId: Int, onCreated: (Long) -> Unit) {
@@ -65,6 +70,7 @@ fun ProfileSetupScreen(onProfileCreated: (Long) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.systemBars)
             .padding(24.dp)
     ) {
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -91,26 +97,36 @@ fun ProfileSetupScreen(onProfileCreated: (Long) -> Unit) {
             contentPadding = PaddingValues(vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.height(180.dp)
+            modifier = Modifier.height(200.dp)
         ) {
-            items(avatarPalette.size) { index ->
-                val color = avatarPalette[index]
+            items(VetAvatarPresets.size) { index ->
+                val style = VetAvatarPresets[index]
+                val selected = selectedAvatar == index
                 Box(
                     modifier = Modifier
-                        .size(64.dp)
+                        .size(68.dp)
                         .clip(CircleShape)
-                        .background(color)
+                        .background(style.scrubColor.copy(alpha = 0.16f))
+                        .border(
+                            width = if (selected) 3.dp else 1.dp,
+                            color = if (selected) HuellitasOrange else style.scrubColor.copy(alpha = 0.35f),
+                            shape = CircleShape
+                        )
                         .clickable { selectedAvatar = index },
                     contentAlignment = Alignment.Center
                 ) {
-                    if (selectedAvatar == index) {
-                        Box(
+                    VetAvatarIllustration(style = style, size = 60.dp)
+                    if (selected) {
+                        Icon(
+                            imageVector = Icons.Filled.CheckCircle,
+                            contentDescription = "Seleccionado",
+                            tint = HuellitasOrange,
                             modifier = Modifier
-                                .size(70.dp)
+                                .align(Alignment.BottomEnd)
+                                .size(20.dp)
                                 .clip(CircleShape)
-                                .background(Color.Transparent)
+                                .background(Color.White)
                         )
-                        Text("✓", color = Color.White, style = MaterialTheme.typography.headlineSmall)
                     }
                 }
             }

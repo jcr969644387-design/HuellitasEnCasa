@@ -1,0 +1,17 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="120"
+    android:viewportHeight="120">
+    <!-- Escudo que representa la privacidad: todo se queda en el dispositivo -->
+    <path android:pathData="M40,25 L80,25 L84,45 L60,95 L36,45 Z" android:fillColor="#4FB0A5"/>
+    <!-- Candado -->
+    <path
+        android:pathData="M52,55 a8,8 0 0,1 16,0"
+        android:strokeColor="#FFF8F0"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"/>
+    <path android:pathData="M50,55 L70,55 L70,73 L50,73 Z" android:fillColor="#FFF8F0"/>
+    <path android:pathData="M58,62 a2.4,2.4 0 1,0 4.8,0 a2.4,2.4 0 1,0 -4.8,0 Z" android:fillColor="#4FB0A5"/>
+</vector>

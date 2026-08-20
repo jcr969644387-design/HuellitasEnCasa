@@ -98,7 +98,7 @@ object AcademyCurriculum {
             bodyParagraphs = listOf(
                 "Cuidar una mascota real es una tarea compartida entre el niño o niña y las personas adultas de la casa.",
                 "Ante cualquier señal de enfermedad o peligro, lo correcto es avisar rápido a un adulto o acudir al veterinario.",
-                "Practicar en HuellitasEnCasa ayuda a aprender hábitos que luego se aplican, siempre con supervisión, en la vida real."
+                "Practicar en Huellitas En Casa ayuda a aprender hábitos que luego se aplican, siempre con supervisión, en la vida real."
             ),
             iconRes = "ic_mod_academia"
         )
