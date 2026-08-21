@@ -153,6 +153,7 @@ fun HomeSetupScreen(profileId: Long, petId: Long) {
 
     val registry = rememberDropTargetRegistry()
     val pendingItems = items.filter { it.id !in placedIds }
+    val placedItems = items.filter { it.id in placedIds }
     var hoveredZoneId by remember { mutableStateOf<String?>(null) }
     val zoneRows = zoneLabels.entries.toList().chunked(3)
 
@@ -176,9 +177,9 @@ fun HomeSetupScreen(profileId: Long, petId: Long) {
             species = speciesCode,
             mood = mood,
             accent = HuellitasTeal,
-            petSize = 110.dp,
-            sceneHeight = 320.dp,
-            petTopPadding = 22.dp
+            petSize = 108.dp,
+            sceneHeight = 400.dp,
+            petTopPadding = 20.dp
         ) {
             Column(
                 modifier = Modifier
@@ -187,55 +188,64 @@ fun HomeSetupScreen(profileId: Long, petId: Long) {
                     .padding(horizontal = 10.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // Objetos ya colocados, a tamaño real, justo delante de la mascota
+                if (placedItems.isNotEmpty()) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        placedItems.forEach { p ->
+                            Box(
+                                modifier = Modifier
+                                    .size(52.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White.copy(alpha = 0.85f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    painter = painterResource(DrawableCatalog.resolve(p.iconRes)),
+                                    contentDescription = p.name,
+                                    tint = Color.Unspecified,
+                                    modifier = Modifier.size(42.dp)
+                                )
+                            }
+                        }
+                    }
+                }
                 zoneRows.forEach { rowZones ->
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                         rowZones.forEach { (zoneId, label) ->
-                            val placedHere = items.filter { it.category == zoneId && it.id in placedIds }
+                            val placedHere = items.any { it.category == zoneId && it.id in placedIds }
                             val zoneState = when {
                                 hoveredZoneId == zoneId -> DropZoneState.RESALTADA
-                                placedHere.isNotEmpty() -> DropZoneState.LLENA
+                                placedHere -> DropZoneState.LLENA
                                 else -> DropZoneState.VACIA
                             }
                             DropZoneBox(
                                 id = zoneId,
                                 registry = registry,
                                 state = zoneState,
-                                modifier = Modifier.weight(1f).height(78.dp)
+                                modifier = Modifier.weight(1f).height(64.dp)
                             ) {
                                 Column(
                                     modifier = Modifier.fillMaxSize().padding(4.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.Center
                                 ) {
-                                    if (placedHere.isEmpty()) {
-                                        Text(
-                                            label,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                            maxLines = 2
-                                        )
-                                    } else {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(34.dp)
-                                                .clip(CircleShape)
-                                                .background(Color.White),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(DrawableCatalog.resolve(placedHere.first().iconRes)),
-                                                contentDescription = placedHere.first().name,
-                                                tint = Color.Unspecified,
-                                                modifier = Modifier.size(24.dp)
-                                            )
-                                        }
+                                    if (placedHere) {
                                         Icon(
                                             imageVector = Icons.Filled.CheckCircle,
                                             contentDescription = "Zona completa",
                                             tint = HuellitasLeaf,
-                                            modifier = Modifier.size(14.dp)
+                                            modifier = Modifier.size(18.dp)
                                         )
                                     }
+                                    Text(
+                                        label,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                                        maxLines = 2
+                                    )
                                 }
                             }
                         }

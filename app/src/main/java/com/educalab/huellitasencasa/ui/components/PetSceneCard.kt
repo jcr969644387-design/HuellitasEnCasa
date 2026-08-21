@@ -1,13 +1,16 @@
 package com.educalab.huellitasencasa.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -44,31 +47,53 @@ fun PetSceneCard(
         colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Box(modifier = Modifier.fillMaxWidth().height(sceneHeight)) {
-            // Pared
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.6f)
-                    .background(accent.copy(alpha = 0.14f))
-            )
-            // Piso
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.46f)
-                    .background(accent.copy(alpha = 0.26f))
-            )
-            // Ventana decorativa
+            // Pared, zocalo y piso, sin superposicion entre ellos (evita cualquier "costura" rara)
+            Column(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(0.6f)
+                        .background(accent.copy(alpha = 0.14f))
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(3.dp)
+                        .background(accent.copy(alpha = 0.5f))
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(0.4f)
+                        .background(accent.copy(alpha = 0.26f))
+                )
+            }
+            // Ventana decorativa: cielo con marco en cruz, para que se lea como ventana y no
+            // como un rectángulo suelto.
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(top = 18.dp, end = 18.dp)
-                    .size(38.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color.White.copy(alpha = 0.55f))
-            )
+                    .padding(top = 16.dp, end = 16.dp)
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color(0xFFBEE3F8))
+                    .border(2.dp, Color.White.copy(alpha = 0.85f), RoundedCornerShape(8.dp))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .width(2.dp)
+                        .fillMaxHeight()
+                        .background(Color.White.copy(alpha = 0.85f))
+                )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .height(2.dp)
+                        .fillMaxWidth()
+                        .background(Color.White.copy(alpha = 0.85f))
+                )
+            }
             PetIllustration(
                 species = species,
                 mood = mood,

@@ -1,5 +1,12 @@
 package com.educalab.huellitasencasa.ui.screens.feeding
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,8 +16,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
@@ -27,9 +38,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -46,10 +59,12 @@ import com.educalab.huellitasencasa.ui.components.IndicatorBar
 import com.educalab.huellitasencasa.ui.components.PetMood
 import com.educalab.huellitasencasa.ui.components.PetSceneCard
 import com.educalab.huellitasencasa.ui.components.TipBubble
+import com.educalab.huellitasencasa.ui.theme.HuellitasCoral
 import com.educalab.huellitasencasa.ui.theme.HuellitasOrange
 import com.educalab.huellitasencasa.ui.theme.HuellitasSky
 import com.educalab.huellitasencasa.util.AppViewModelFactory
 import com.educalab.huellitasencasa.util.DrawableCatalog
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -72,6 +87,9 @@ class FeedingViewModel(
     private val _feedback = MutableStateFlow<String?>(null)
     val feedback: StateFlow<String?> = _feedback
 
+    private val _preferredFoods = MutableStateFlow<List<FoodItemEntity>>(emptyList())
+    val preferredFoods: StateFlow<List<FoodItemEntity>> = _preferredFoods
+
     fun load(petId: Long) {
         viewModelScope.launch {
             petRepo.observePet(petId).collect { p -> if (p != null) _pet.value = p }
@@ -79,6 +97,7 @@ class FeedingViewModel(
         viewModelScope.launch {
             val p = petRepo.getPet(petId) ?: return@launch
             _cards.value = contentRepo.randomFoodCards(p.speciesId, 10)
+            _preferredFoods.value = contentRepo.preferredFoodsFor(p.speciesId, 4)
         }
     }
 
@@ -115,6 +134,7 @@ fun FeedingScreen(profileId: Long, petId: Long) {
     val cards by vm.cards.collectAsState()
     val index by vm.cardIndex.collectAsState()
     val feedback by vm.feedback.collectAsState()
+    val preferredFoods by vm.preferredFoods.collectAsState()
 
     LaunchedEffect(petId) { vm.load(petId) }
     val currentPet = pet ?: return
@@ -125,11 +145,20 @@ fun FeedingScreen(profileId: Long, petId: Long) {
             speciesCode = runCatching { SpeciesCode.valueOf(it.code) }.getOrDefault(SpeciesCode.PERRO)
         }
     }
-    val mood = when {
+    val baseMood = when {
         currentPet.feeding < 40 || currentPet.hydration < 40 -> PetMood.HAMBRIENTO
         currentPet.feeding >= 70 && currentPet.hydration >= 70 -> PetMood.FELIZ
         else -> PetMood.NEUTRAL
     }
+    var celebrating by remember { mutableStateOf(false) }
+    LaunchedEffect(celebrating) {
+        if (celebrating) {
+            delay(1400)
+            celebrating = false
+        }
+    }
+    val effectiveMood = if (celebrating) PetMood.FELIZ else baseMood
+    var selectedFoodId by remember { mutableStateOf<Long?>(null) }
 
     Column(
         modifier = Modifier
@@ -139,14 +168,70 @@ fun FeedingScreen(profileId: Long, petId: Long) {
     ) {
         Text("Alimentación y agua", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(8.dp))
-        PetSceneCard(species = speciesCode, mood = mood, accent = HuellitasOrange, modifier = Modifier.padding(bottom = 12.dp))
+        PetSceneCard(species = speciesCode, mood = effectiveMood, accent = HuellitasOrange, modifier = Modifier.padding(bottom = 12.dp)) {
+            AnimatedVisibility(
+                visible = celebrating,
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 10.dp),
+                enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
+                exit = fadeOut()
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    repeat(3) {
+                        Icon(Icons.Filled.Favorite, contentDescription = null, tint = HuellitasCoral, modifier = Modifier.size(20.dp))
+                    }
+                }
+            }
+        }
         IndicatorBar("Alimentación", currentPet.feeding, HuellitasOrange)
         Spacer(Modifier.height(6.dp))
         IndicatorBar("Hidratación", currentPet.hydration, HuellitasSky)
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(14.dp))
+
+        if (preferredFoods.isNotEmpty()) {
+            Text("A ${currentPet.name} le encanta:", style = MaterialTheme.typography.titleSmall)
+            Spacer(Modifier.height(6.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                preferredFoods.forEach { food ->
+                    val selected = selectedFoodId == food.id
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(if (selected) HuellitasOrange.copy(alpha = 0.16f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                            .border(
+                                width = if (selected) 2.dp else 1.dp,
+                                color = if (selected) HuellitasOrange else Color.Transparent,
+                                shape = RoundedCornerShape(14.dp)
+                            )
+                            .clickable { selectedFoodId = food.id }
+                            .padding(vertical = 8.dp, horizontal = 4.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            painter = painterResource(DrawableCatalog.resolve(food.iconRes)),
+                            contentDescription = food.name,
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Text(food.name, style = MaterialTheme.typography.labelSmall, maxLines = 1, textAlign = TextAlign.Center)
+                    }
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+        }
+
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Button(onClick = { vm.feed(profileId) }, modifier = Modifier.weight(1f)) { Text("Alimentar") }
-            OutlinedButton(onClick = { vm.water(profileId) }, modifier = Modifier.weight(1f)) { Text("Dar agua") }
+            Button(onClick = { celebrating = true; vm.feed(profileId) }, modifier = Modifier.weight(1f)) { Text("Alimentar") }
+            OutlinedButton(onClick = { celebrating = true; vm.water(profileId) }, modifier = Modifier.weight(1f)) {
+                Icon(
+                    painter = painterResource(DrawableCatalog.resolve("item_cuenco_agua")),
+                    contentDescription = null,
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(Modifier.width(6.dp))
+                Text("Dar agua")
+            }
         }
         Spacer(Modifier.height(16.dp))
         Divider()

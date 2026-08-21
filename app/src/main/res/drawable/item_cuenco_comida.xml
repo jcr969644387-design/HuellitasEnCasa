@@ -3,10 +3,18 @@
     android:height="64dp"
     android:viewportWidth="64"
     android:viewportHeight="64">
+    <!-- Cuenco -->
     <path
-        android:pathData="M14,30 a18,9 0 0,0 36,0 v4 a18,9 0 0,1 -36,0 Z"
+        android:pathData="M14,30 a18,9 0 0,0 36,0 v6 a18,10 0 0,1 -36,0 Z"
         android:fillColor="#B5651D"/>
     <path
         android:pathData="M14,30 a18,9 0 0,1 36,0 a18,9 0 0,1 -36,0 Z"
         android:fillColor="#FF8A5B"/>
+    <!-- Montoncito de comida -->
+    <path
+        android:pathData="M20,29 a12,7 0 1,1 24,0 a12,7 0 1,1 -24,0 Z"
+        android:fillColor="#C08A45"/>
+    <path android:pathData="M26,26 a2.4,2.4 0 1,0 4.8,0 a2.4,2.4 0 1,0 -4.8,0 Z" android:fillColor="#E7B978"/>
+    <path android:pathData="M34,28 a2.4,2.4 0 1,0 4.8,0 a2.4,2.4 0 1,0 -4.8,0 Z" android:fillColor="#E7B978"/>
+    <path android:pathData="M30,31 a2.4,2.4 0 1,0 4.8,0 a2.4,2.4 0 1,0 -4.8,0 Z" android:fillColor="#E7B978"/>
 </vector>

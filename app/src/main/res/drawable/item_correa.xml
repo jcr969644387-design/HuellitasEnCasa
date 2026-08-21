@@ -3,14 +3,20 @@
     android:height="64dp"
     android:viewportWidth="64"
     android:viewportHeight="64">
+    <!-- Empuñadura -->
     <path
         android:pathData="M14,20 a10,10 0 1,1 0,0.1 Z"
         android:fillColor="#00000000"
-    android:strokeColor="#B5651D"
-    android:strokeWidth="3"/>
+        android:strokeColor="#B5651D"
+        android:strokeWidth="4"/>
+    <!-- Correa -->
     <path
-        android:pathData="M22,26 Q40,34 50,48"
+        android:pathData="M22,26 Q38,32 48,46"
         android:fillColor="#00000000"
-    android:strokeColor="#B5651D"
-    android:strokeWidth="3"/>
+        android:strokeColor="#B5651D"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"/>
+    <!-- Mosqueton -->
+    <path android:pathData="M44,42 L54,42 L54,50 L44,50 Z" android:fillColor="#8FA0AA"/>
+    <path android:pathData="M49,42 a3,3 0 1,1 0,-0.1 Z" android:fillColor="#00000000" android:strokeColor="#8FA0AA" android:strokeWidth="3"/>
 </vector>

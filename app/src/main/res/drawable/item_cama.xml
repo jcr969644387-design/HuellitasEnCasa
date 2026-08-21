@@ -3,10 +3,17 @@
     android:height="64dp"
     android:viewportWidth="64"
     android:viewportHeight="64">
+    <!-- Cojin: base con sombra -->
     <path
-        android:pathData="M12,36 h40 v10 h-40 Z"
-        android:fillColor="#8E7CC3"/>
+        android:pathData="M8,34 a24,16 0 1,0 48,0 v4 a24,16 0 1,1 -48,0 Z"
+        android:fillColor="#7C6BB0"/>
     <path
-        android:pathData="M12,30 a20,8 0 0,1 40,0 v6 h-40 Z"
+        android:pathData="M8,32 a24,14 0 1,0 48,0 a24,14 0 1,0 -48,0 Z"
         android:fillColor="#B8A9E0"/>
+    <!-- Huellita bordada -->
+    <path android:pathData="M28,34 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0 Z" android:fillColor="#FFFFFF" android:fillAlpha="0.75"/>
+    <path android:pathData="M22,28 a2.6,2.6 0 1,0 5.2,0 a2.6,2.6 0 1,0 -5.2,0 Z" android:fillColor="#FFFFFF" android:fillAlpha="0.75"/>
+    <path android:pathData="M29,24 a2.8,2.8 0 1,0 5.6,0 a2.8,2.8 0 1,0 -5.6,0 Z" android:fillColor="#FFFFFF" android:fillAlpha="0.75"/>
+    <path android:pathData="M37,24 a2.8,2.8 0 1,0 5.6,0 a2.8,2.8 0 1,0 -5.6,0 Z" android:fillColor="#FFFFFF" android:fillAlpha="0.75"/>
+    <path android:pathData="M45,28 a2.6,2.6 0 1,0 5.2,0 a2.6,2.6 0 1,0 -5.2,0 Z" android:fillColor="#FFFFFF" android:fillAlpha="0.75"/>
 </vector>

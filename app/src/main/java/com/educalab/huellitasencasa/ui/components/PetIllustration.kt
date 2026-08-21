@@ -118,9 +118,9 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSpeciesAppendag
 ) {
     when (species) {
         SpeciesCode.PERRO -> {
-            // orejas caídas
-            drawOval(palette.bodyDark, topLeft = Offset(headCenter.x - headRadius * 1.15f, headCenter.y - headRadius * 0.2f), size = Size(headRadius * 0.7f, headRadius * 1.1f))
-            drawOval(palette.bodyDark, topLeft = Offset(headCenter.x + headRadius * 0.45f, headCenter.y - headRadius * 0.2f), size = Size(headRadius * 0.7f, headRadius * 1.1f))
+            // orejas caídas, mas cercanas a la cabeza para no romper la silueta redondeada
+            drawOval(palette.bodyDark, topLeft = Offset(headCenter.x - headRadius * 1.0f, headCenter.y - headRadius * 0.55f), size = Size(headRadius * 0.55f, headRadius * 1.0f))
+            drawOval(palette.bodyDark, topLeft = Offset(headCenter.x + headRadius * 0.45f, headCenter.y - headRadius * 0.55f), size = Size(headRadius * 0.55f, headRadius * 1.0f))
         }
         SpeciesCode.GATO -> {
             val p1 = androidx.compose.ui.graphics.Path().apply {
@@ -187,12 +187,7 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSpeciesSnout(
 ) {
     when (species) {
         SpeciesCode.PERRO -> {
-            drawOval(
-                color = Color(0xFFFFF3EA),
-                topLeft = Offset(headCenter.x - headRadius * 0.22f, headCenter.y + headRadius * 0.24f),
-                size = Size(headRadius * 0.44f, headRadius * 0.3f)
-            )
-            drawCircle(Color(0xFF2E241D), radius = headRadius * 0.06f, center = Offset(headCenter.x, headCenter.y + headRadius * 0.36f))
+            drawCircle(Color(0xFF2E241D), radius = headRadius * 0.065f, center = Offset(headCenter.x, headCenter.y + headRadius * 0.28f))
         }
         SpeciesCode.GATO -> {
             val nose = androidx.compose.ui.graphics.Path().apply {

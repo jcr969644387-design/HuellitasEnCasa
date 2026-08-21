@@ -3,10 +3,20 @@
     android:height="64dp"
     android:viewportWidth="64"
     android:viewportHeight="64">
+    <!-- Cuenco -->
     <path
-        android:pathData="M14,30 a18,9 0 0,0 36,0 v4 a18,9 0 0,1 -36,0 Z"
+        android:pathData="M14,30 a18,9 0 0,0 36,0 v6 a18,10 0 0,1 -36,0 Z"
         android:fillColor="#2F7FB0"/>
     <path
         android:pathData="M14,30 a18,9 0 0,1 36,0 a18,9 0 0,1 -36,0 Z"
         android:fillColor="#5AC8FA"/>
+    <!-- Agua -->
+    <path
+        android:pathData="M19,29 a13,6.5 0 1,1 26,0 a13,6.5 0 1,1 -26,0 Z"
+        android:fillColor="#1E6FA0"/>
+    <!-- Brillo del agua -->
+    <path
+        android:pathData="M24,27 a4,2 0 1,1 8,0 a4,2 0 1,1 -8,0 Z"
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.6"/>
 </vector>

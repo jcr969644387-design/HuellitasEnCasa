@@ -23,6 +23,9 @@ interface FoodItemDao {
     @Query("SELECT * FROM food_items WHERE species_id = :speciesId OR species_id IS NULL ORDER BY RANDOM() LIMIT :limit")
     suspend fun getRandomForSpecies(speciesId: Long, limit: Int): List<FoodItemEntity>
 
+    @Query("SELECT * FROM food_items WHERE (species_id = :speciesId OR species_id IS NULL) AND is_appropriate = 1 ORDER BY RANDOM() LIMIT :limit")
+    suspend fun getAppropriateForSpecies(speciesId: Long, limit: Int): List<FoodItemEntity>
+
     @Query("SELECT COUNT(*) FROM food_items")
     suspend fun count(): Int
 }

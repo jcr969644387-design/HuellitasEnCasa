@@ -15,6 +15,9 @@ class ContentRepository(private val db: HuellitasDatabase) {
     suspend fun randomFoodCards(speciesId: Long, count: Int = 10): List<FoodItemEntity> =
         db.foodItemDao().getRandomForSpecies(speciesId, count)
 
+    suspend fun preferredFoodsFor(speciesId: Long, count: Int = 4): List<FoodItemEntity> =
+        db.foodItemDao().getAppropriateForSpecies(speciesId, count)
+
     suspend fun recordFoodAttempt(userProfileId: Long, item: FoodItemEntity, petId: Long?, userSaidAppropriate: Boolean): Boolean {
         val wasCorrect = userSaidAppropriate == item.isAppropriate
         db.foodAttemptDao().insert(
