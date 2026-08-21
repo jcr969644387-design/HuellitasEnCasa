@@ -35,6 +35,7 @@ import com.educalab.huellitasencasa.domain.model.CareActionType
 import com.educalab.huellitasencasa.domain.model.DaySlot
 import com.educalab.huellitasencasa.ui.components.DraggableCard
 import com.educalab.huellitasencasa.ui.components.DropZoneBox
+import com.educalab.huellitasencasa.ui.components.DropZoneState
 import com.educalab.huellitasencasa.ui.components.TipBubble
 import com.educalab.huellitasencasa.ui.components.rememberDropTargetRegistry
 import com.educalab.huellitasencasa.util.AppViewModelFactory
@@ -117,7 +118,13 @@ fun PlannerScreen(profileId: Long, petId: Long) {
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf(DaySlot.MANANA, DaySlot.TARDE, DaySlot.NOCHE).forEach { slot ->
-                DropZoneBox(id = slot.name, registry = registry, isHighlighted = false, modifier = Modifier.weight(1f).height(140.dp)) {
+                val filled = placements.any { it.value == slot }
+                DropZoneBox(
+                    id = slot.name,
+                    registry = registry,
+                    state = if (filled) DropZoneState.LLENA else DropZoneState.VACIA,
+                    modifier = Modifier.weight(1f).height(140.dp)
+                ) {
                     Column(modifier = Modifier.padding(6.dp)) {
                         Text(labelForSlot(slot), style = MaterialTheme.typography.labelLarge)
                         placements.filterValues { it == slot }.keys.forEach { action ->

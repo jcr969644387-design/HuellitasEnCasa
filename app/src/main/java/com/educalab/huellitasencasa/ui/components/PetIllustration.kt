@@ -3,6 +3,7 @@ package com.educalab.huellitasencasa.ui.components
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -53,6 +54,22 @@ fun PetIllustration(
         animationSpec = infiniteRepeatable(tween(1800), RepeatMode.Reverse),
         label = "breath"
     )
+    val blink by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = 3200
+                0f at 0
+                0f at 2900
+                1f at 3000
+                0f at 3100
+                0f at 3200
+            },
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "blink"
+    )
 
     Canvas(modifier = modifier.size(size)) {
         val w = this.size.width
@@ -76,12 +93,16 @@ fun PetIllustration(
 
         // Cuerpo
         drawCircle(color = palette.body, radius = bodyRadius, center = bodyCenter)
+        // Patas, para que se apoye en el suelo en vez de flotar como una figura ovalada
+        drawFeet(species, palette, bodyCenter, bodyRadius)
         // Cabeza
         drawCircle(color = palette.body, radius = headRadius, center = headCenter)
         // Mejillas/pecho claro
         drawCircle(color = palette.accent, radius = headRadius * 0.5f, center = Offset(headCenter.x, headCenter.y + headRadius * 0.35f))
+        // Hocico/pico especifico de la especie, para que se distinga de un huevo liso
+        drawSpeciesSnout(species, headCenter, headRadius)
 
-        drawFace(mood, palette, headCenter, headRadius)
+        drawFace(mood, palette, headCenter, headRadius, blink)
     }
 }
 
@@ -134,11 +155,88 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSpeciesAppendag
     }
 }
 
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawFeet(
+    species: SpeciesCode,
+    palette: SpeciesPalette,
+    bodyCenter: Offset,
+    bodyRadius: Float
+) {
+    when (species) {
+        SpeciesCode.AVE -> {
+            val legColor = Color(0xFFE8A23C)
+            val legTopY = bodyCenter.y + bodyRadius * 0.55f
+            val legBottomY = bodyCenter.y + bodyRadius * 0.82f
+            drawLine(legColor, Offset(bodyCenter.x - bodyRadius * 0.16f, legTopY), Offset(bodyCenter.x - bodyRadius * 0.16f, legBottomY), strokeWidth = bodyRadius * 0.07f, cap = StrokeCap.Round)
+            drawLine(legColor, Offset(bodyCenter.x + bodyRadius * 0.16f, legTopY), Offset(bodyCenter.x + bodyRadius * 0.16f, legBottomY), strokeWidth = bodyRadius * 0.07f, cap = StrokeCap.Round)
+        }
+        else -> {
+            drawOval(palette.bodyDark, topLeft = Offset(bodyCenter.x - bodyRadius * 0.62f, bodyCenter.y + bodyRadius * 0.64f), size = Size(bodyRadius * 0.4f, bodyRadius * 0.26f))
+            drawOval(palette.bodyDark, topLeft = Offset(bodyCenter.x + bodyRadius * 0.22f, bodyCenter.y + bodyRadius * 0.64f), size = Size(bodyRadius * 0.4f, bodyRadius * 0.26f))
+        }
+    }
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSpeciesSnout(
+    species: SpeciesCode,
+    headCenter: Offset,
+    headRadius: Float
+) {
+    when (species) {
+        SpeciesCode.PERRO -> {
+            drawOval(
+                color = Color(0xFFFFF3EA),
+                topLeft = Offset(headCenter.x - headRadius * 0.22f, headCenter.y + headRadius * 0.24f),
+                size = Size(headRadius * 0.44f, headRadius * 0.3f)
+            )
+            drawCircle(Color(0xFF2E241D), radius = headRadius * 0.06f, center = Offset(headCenter.x, headCenter.y + headRadius * 0.36f))
+        }
+        SpeciesCode.GATO -> {
+            val nose = androidx.compose.ui.graphics.Path().apply {
+                moveTo(headCenter.x - headRadius * 0.06f, headCenter.y + headRadius * 0.22f)
+                lineTo(headCenter.x + headRadius * 0.06f, headCenter.y + headRadius * 0.22f)
+                lineTo(headCenter.x, headCenter.y + headRadius * 0.3f)
+                close()
+            }
+            drawPath(nose, Color(0xFFEF9AAE))
+        }
+        SpeciesCode.CONEJO -> {
+            drawCircle(Color(0xFFEF9AAE), radius = headRadius * 0.07f, center = Offset(headCenter.x, headCenter.y + headRadius * 0.26f))
+        }
+        SpeciesCode.HAMSTER -> {
+            drawCircle(Color(0xFF2E241D), radius = headRadius * 0.06f, center = Offset(headCenter.x, headCenter.y + headRadius * 0.26f))
+        }
+        SpeciesCode.AVE -> {
+            val beak = androidx.compose.ui.graphics.Path().apply {
+                moveTo(headCenter.x - headRadius * 0.16f, headCenter.y + headRadius * 0.12f)
+                lineTo(headCenter.x + headRadius * 0.16f, headCenter.y + headRadius * 0.12f)
+                lineTo(headCenter.x, headCenter.y + headRadius * 0.38f)
+                close()
+            }
+            drawPath(beak, Color(0xFFFFC93C))
+        }
+    }
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawBlinkingEye(
+    center: Offset,
+    radius: Float,
+    blink: Float,
+    color: Color
+) {
+    val eyeHeight = (radius * 2f * (1f - blink * 0.92f)).coerceAtLeast(radius * 0.25f)
+    drawOval(
+        color = color,
+        topLeft = Offset(center.x - radius, center.y - eyeHeight / 2f),
+        size = Size(radius * 2f, eyeHeight)
+    )
+}
+
 private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawFace(
     mood: PetMood,
     palette: SpeciesPalette,
     headCenter: Offset,
-    headRadius: Float
+    headRadius: Float,
+    blink: Float
 ) {
     val eyeY = headCenter.y - headRadius * 0.05f
     val eyeDx = headRadius * 0.38f
@@ -157,8 +255,8 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawFace(
             )
         }
         PetMood.NEUTRAL -> {
-            drawCircle(eyeColor, radius = headRadius * 0.09f, center = Offset(headCenter.x - eyeDx, eyeY))
-            drawCircle(eyeColor, radius = headRadius * 0.09f, center = Offset(headCenter.x + eyeDx, eyeY))
+            drawBlinkingEye(Offset(headCenter.x - eyeDx, eyeY), headRadius * 0.09f, blink, eyeColor)
+            drawBlinkingEye(Offset(headCenter.x + eyeDx, eyeY), headRadius * 0.09f, blink, eyeColor)
             drawLine(
                 eyeColor,
                 start = Offset(headCenter.x - headRadius * 0.18f, headCenter.y + headRadius * 0.32f),
@@ -178,8 +276,8 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawFace(
             )
         }
         PetMood.HAMBRIENTO -> {
-            drawCircle(eyeColor, radius = headRadius * 0.1f, center = Offset(headCenter.x - eyeDx, eyeY))
-            drawCircle(eyeColor, radius = headRadius * 0.1f, center = Offset(headCenter.x + eyeDx, eyeY))
+            drawBlinkingEye(Offset(headCenter.x - eyeDx, eyeY), headRadius * 0.1f, blink, eyeColor)
+            drawBlinkingEye(Offset(headCenter.x + eyeDx, eyeY), headRadius * 0.1f, blink, eyeColor)
             drawOval(
                 color = eyeColor,
                 topLeft = Offset(headCenter.x - headRadius * 0.16f, headCenter.y + headRadius * 0.18f),

@@ -40,6 +40,7 @@ import com.educalab.huellitasencasa.domain.model.NeedType
 import com.educalab.huellitasencasa.domain.model.SpeciesCode
 import com.educalab.huellitasencasa.ui.components.DraggableCard
 import com.educalab.huellitasencasa.ui.components.DropZoneBox
+import com.educalab.huellitasencasa.ui.components.DropZoneState
 import com.educalab.huellitasencasa.ui.components.IndicatorBar
 import com.educalab.huellitasencasa.ui.components.PetIllustration
 import com.educalab.huellitasencasa.ui.components.PetMood
@@ -115,7 +116,7 @@ fun ActivityScreen(profileId: Long, petId: Long) {
         Text("Arrastra el juguete hasta tu mascota", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
-            DropZoneBox(id = "PET", registry = registry, isHighlighted = false) {
+            DropZoneBox(id = "PET", registry = registry, state = DropZoneState.VACIA) {
                 PetIllustration(species = speciesCode, mood = PetMood.FELIZ, size = 120.dp)
             }
             DraggableCard(registry = registry, onDropped = { target -> if (target == "PET") vm.play(profileId) }) { _ ->

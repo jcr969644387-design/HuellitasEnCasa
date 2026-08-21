@@ -16,8 +16,12 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -29,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -44,8 +49,10 @@ import com.educalab.huellitasencasa.data.repository.PetRepository
 import com.educalab.huellitasencasa.data.repository.ProgressRepository
 import com.educalab.huellitasencasa.ui.components.DraggableCard
 import com.educalab.huellitasencasa.ui.components.DropZoneBox
+import com.educalab.huellitasencasa.ui.components.DropZoneState
 import com.educalab.huellitasencasa.ui.components.TipBubble
 import com.educalab.huellitasencasa.ui.components.rememberDropTargetRegistry
+import com.educalab.huellitasencasa.ui.theme.HuellitasLeaf
 import com.educalab.huellitasencasa.util.AppViewModelFactory
 import com.educalab.huellitasencasa.util.DrawableCatalog
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -122,6 +129,7 @@ fun HomeSetupScreen(profileId: Long, petId: Long) {
 
     val registry = rememberDropTargetRegistry()
     val pendingItems = items.filter { it.id !in placedIds }
+    var hoveredZoneId by remember { mutableStateOf<String?>(null) }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("Prepara el hogar", style = MaterialTheme.typography.headlineSmall)
@@ -141,22 +149,59 @@ fun HomeSetupScreen(profileId: Long, petId: Long) {
             modifier = Modifier.weight(1f)
         ) {
             items(zoneLabels.entries.toList()) { (zoneId, label) ->
-                DropZoneBox(id = zoneId, registry = registry, isHighlighted = false, modifier = Modifier.fillMaxWidth().height(96.dp)) {
+                val placedHere = items.filter { it.category == zoneId && it.id in placedIds }
+                val zoneState = when {
+                    hoveredZoneId == zoneId -> DropZoneState.RESALTADA
+                    placedHere.isNotEmpty() -> DropZoneState.LLENA
+                    else -> DropZoneState.VACIA
+                }
+                DropZoneBox(
+                    id = zoneId,
+                    registry = registry,
+                    state = zoneState,
+                    modifier = Modifier.fillMaxWidth().height(108.dp)
+                ) {
                     Column(
                         modifier = Modifier.fillMaxSize().padding(8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        Text(label, style = MaterialTheme.typography.labelLarge)
-                        val placedHere = items.filter { it.category == zoneId && it.id in placedIds }
-                        Row {
-                            placedHere.forEach { p ->
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(label, style = MaterialTheme.typography.labelLarge)
+                            if (placedHere.isNotEmpty()) {
                                 Icon(
-                                    painter = painterResource(DrawableCatalog.resolve(p.iconRes)),
-                                    contentDescription = p.name,
-                                    tint = Color.Unspecified,
-                                    modifier = Modifier.size(28.dp)
+                                    imageVector = Icons.Filled.CheckCircle,
+                                    contentDescription = "Zona completa",
+                                    tint = HuellitasLeaf,
+                                    modifier = Modifier.size(16.dp)
                                 )
+                            }
+                        }
+                        Spacer(Modifier.height(4.dp))
+                        if (placedHere.isEmpty()) {
+                            Text(
+                                "Suelta aquí",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        } else {
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                placedHere.forEach { p ->
+                                    Box(
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .clip(CircleShape)
+                                            .background(Color.White),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(DrawableCatalog.resolve(p.iconRes)),
+                                            contentDescription = p.name,
+                                            tint = Color.Unspecified,
+                                            modifier = Modifier.size(32.dp)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -167,12 +212,22 @@ fun HomeSetupScreen(profileId: Long, petId: Long) {
         Spacer(Modifier.height(8.dp))
         Text("Objetos disponibles", style = MaterialTheme.typography.titleMedium)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(vertical = 8.dp)) {
-            items(pendingItems) { item ->
+            items(pendingItems, key = { it.id }) { item ->
                 DraggableCard(
                     registry = registry,
-                    onDropped = { zoneId -> vm.handleDrop(profileId, item, zoneId) }
+                    onDragging = { pos -> hoveredZoneId = registry.hitTest(pos) },
+                    onDropped = { zoneId ->
+                        hoveredZoneId = null
+                        vm.handleDrop(profileId, item, zoneId)
+                    }
                 ) { dragging ->
-                    Card(shape = RoundedCornerShape(16.dp)) {
+                    Card(
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (dragging) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = if (dragging) 8.dp else 1.dp)
+                    ) {
                         Column(
                             modifier = Modifier.padding(10.dp).size(84.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,

@@ -7,11 +7,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -122,18 +125,20 @@ fun HubScreen(petId: Long, onNavigate: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing)
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        Card(shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
-            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                PetIllustration(species = speciesCode, mood = mood, size = 96.dp)
-                Spacer(Modifier.width(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(currentPet.name, style = MaterialTheme.typography.headlineSmall)
-                    Text("Bienestar: ${levelLabel(level)}", style = MaterialTheme.typography.bodyMedium)
-                    Spacer(Modifier.height(8.dp))
-                    IndicatorBar("Bienestar general", score, HuellitasTeal)
-                }
+        Card(shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                PetIllustration(species = speciesCode, mood = mood, size = 176.dp)
+                Spacer(Modifier.height(4.dp))
+                Text(currentPet.name, style = MaterialTheme.typography.headlineMedium)
+                Text("Bienestar: ${levelLabel(level)}", style = MaterialTheme.typography.bodyMedium)
+                Spacer(Modifier.height(10.dp))
+                IndicatorBar("Bienestar general", score, HuellitasTeal, modifier = Modifier.fillMaxWidth())
             }
         }
         Spacer(Modifier.height(10.dp))
