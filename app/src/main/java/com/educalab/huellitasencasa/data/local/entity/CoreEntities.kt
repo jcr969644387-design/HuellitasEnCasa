@@ -90,6 +90,7 @@ data class VirtualPetEntity(
     @ColumnInfo(name = "activity_level", defaultValue = "80") val activityLevel: Int = 80,
     @ColumnInfo(name = "rest", defaultValue = "80") val rest: Int = 80,
     @ColumnInfo(name = "affection", defaultValue = "80") val affection: Int = 80,
+    /** Pese al nombre de columna, guarda System.currentTimeMillis() (ver PetRepository/CareEngine). */
     @ColumnInfo(name = "last_session_epoch_day") val lastSessionEpochDay: Long,
     @ColumnInfo(name = "is_active", defaultValue = "1") val isActive: Boolean = true
 )

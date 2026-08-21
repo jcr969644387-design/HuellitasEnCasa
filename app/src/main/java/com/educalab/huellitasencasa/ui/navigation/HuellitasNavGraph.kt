@@ -87,7 +87,15 @@ fun HuellitasNavGraph() {
                 resolvedStart = Destinations.ADOPTION
             } else {
                 session.setActivePet(activePet.id)
-                resolvedStart = Destinations.HUB
+                val species = app.petRepository.getSpecies(activePet.speciesId)
+                val homeItems = species?.let { app.contentRepository.homeItemsFor(it.code) }.orEmpty()
+                val completed = app.contentRepository.completedHomeItemIds(activePet.id)
+                resolvedStart = if (homeItems.isNotEmpty() && homeItems.any { it.id !in completed }) {
+                    // El hogar quedó a medio armar (se cerró la app antes de terminar): se retoma.
+                    Destinations.HOME_SETUP
+                } else {
+                    Destinations.HUB
+                }
             }
         }
     }
@@ -110,7 +118,8 @@ fun HuellitasNavGraph() {
                     profileId?.let { pid ->
                         AdoptionScreen(profileId = pid, onAdopted = { petId ->
                             session.setActivePet(petId)
-                            navController.navigate(Destinations.HUB) {
+                            // Antes de llegar al centro principal, se arma el hogar por primera vez.
+                            navController.navigate(Destinations.HOME_SETUP) {
                                 popUpTo(Destinations.ONBOARDING) { inclusive = true }
                             }
                         })
@@ -127,9 +136,15 @@ fun HuellitasNavGraph() {
                     val petId by session.currentPetId.collectAsState()
                     val profileId by session.currentProfileId.collectAsState()
                     if (petId != null && profileId != null) {
-                        ModuleScaffold("Hogar de la mascota", onBack = { navController.popBackStack() }) {
-                            HomeSetupScreen(profileId!!, petId!!)
-                        }
+                        HomeSetupScreen(
+                            profileId = profileId!!,
+                            petId = petId!!,
+                            onCompleted = {
+                                navController.navigate(Destinations.HUB) {
+                                    popUpTo(Destinations.ONBOARDING) { inclusive = true }
+                                }
+                            }
+                        )
                     }
                 }
                 composable(Destinations.FEEDING) {

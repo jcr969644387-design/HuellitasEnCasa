@@ -15,8 +15,17 @@ class ContentRepository(private val db: HuellitasDatabase) {
     suspend fun randomFoodCards(speciesId: Long, count: Int = 10): List<FoodItemEntity> =
         db.foodItemDao().getRandomForSpecies(speciesId, count)
 
-    suspend fun preferredFoodsFor(speciesId: Long, count: Int = 4): List<FoodItemEntity> =
-        db.foodItemDao().getAppropriateForSpecies(speciesId, count)
+    /**
+     * Alimentos realmente recomendados para la especie (categoría ALIMENTO_BUENO únicamente,
+     * nunca las tarjetas de "situación de cuidado" que comparten la misma tabla). El agua
+     * siempre aparece primero cuando está disponible; el resto se completa al azar.
+     */
+    suspend fun preferredFoodsFor(speciesId: Long, count: Int = 4): List<FoodItemEntity> {
+        val pool = db.foodItemDao().getGoodFoodsForSpecies(speciesId)
+        val water = pool.filter { it.iconRes == "food_agua_fresca" }.take(1)
+        val solids = pool.filterNot { it.iconRes == "food_agua_fresca" }.shuffled()
+        return (water + solids).take(count)
+    }
 
     suspend fun recordFoodAttempt(userProfileId: Long, item: FoodItemEntity, petId: Long?, userSaidAppropriate: Boolean): Boolean {
         val wasCorrect = userSaidAppropriate == item.isAppropriate
@@ -36,6 +45,10 @@ class ContentRepository(private val db: HuellitasDatabase) {
 
     // --- Hogar de la mascota ---
     suspend fun homeItemsFor(speciesCode: String): List<HomeItemEntity> = db.homeItemDao().getCompatibleWith(speciesCode)
+
+    /** Ids de los objetos del hogar ya colocados correctamente para esta mascota (persistente). */
+    suspend fun completedHomeItemIds(petId: Long): Set<Long> =
+        db.homeChallengeDao().getCorrectlyPlacedItemIds(petId).toSet()
 
     suspend fun recordHomePlacement(petId: Long, item: HomeItemEntity, placedCorrectly: Boolean) {
         db.homeChallengeDao().insert(

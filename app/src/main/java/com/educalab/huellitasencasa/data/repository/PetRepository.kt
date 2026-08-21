@@ -7,8 +7,6 @@ import com.educalab.huellitasencasa.data.local.entity.VirtualPetEntity
 import com.educalab.huellitasencasa.domain.logic.CareEngine
 import com.educalab.huellitasencasa.domain.model.NeedType
 import kotlinx.coroutines.flow.Flow
-import java.time.LocalDate
-import java.time.ZoneOffset
 
 class PetRepository(private val db: HuellitasDatabase) {
 
@@ -25,8 +23,6 @@ class PetRepository(private val db: HuellitasDatabase) {
 
     suspend fun countPetsForUser(userProfileId: Long): Int = db.virtualPetDao().countForUser(userProfileId)
 
-    private fun todayEpochDay(): Long = LocalDate.now(ZoneOffset.UTC).toEpochDay()
-
     suspend fun adoptPet(userProfileId: Long, speciesId: Long, name: String, avatarVariant: Int): Long {
         val cleanName = name.trim().ifBlank { "Mi mascota" }.take(16)
         return db.virtualPetDao().insert(
@@ -36,19 +32,21 @@ class PetRepository(private val db: HuellitasDatabase) {
                 name = cleanName,
                 avatarVariant = avatarVariant,
                 adoptedAt = System.currentTimeMillis(),
-                lastSessionEpochDay = todayEpochDay()
+                lastSessionEpochDay = System.currentTimeMillis()
             )
         )
     }
 
     /**
-     * Se llama una vez al abrir el hogar de una mascota. Si ha pasado al menos un día de
-     * calendario desde la última visita, aplica un descenso suave (no punitivo) a los seis
-     * indicadores, respetando siempre el piso protector de CareEngine.
+     * Se llama cada vez que se abre el hogar de una mascota. Si ha pasado suficiente tiempo real
+     * (ver [CareEngine.DECAY_INTERVAL_MILLIS]) desde la última visita, aplica un descenso suave
+     * (no punitivo) a los seis indicadores, respetando siempre el piso protector de CareEngine.
+     * Nota: la columna sigue llamándose "last_session_epoch_day" en la base de datos, pero desde
+     * aquí en adelante guarda milisegundos, no un número de día; ambos son solo un Long para SQLite.
      */
     suspend fun applySessionDecayIfNeeded(pet: VirtualPetEntity): VirtualPetEntity {
-        val today = todayEpochDay()
-        if (!CareEngine.shouldApplyDecay(pet.lastSessionEpochDay, today)) return pet
+        val now = System.currentTimeMillis()
+        if (!CareEngine.shouldApplyDecay(pet.lastSessionEpochDay, now)) return pet
         val defs = db.petNeedDefinitionDao().getForSpecies(pet.speciesId).associateBy { it.needType }
         val decayed = pet.copy(
             feeding = CareEngine.applySessionDecay(pet.feeding, defs[NeedType.ALIMENTACION.name]?.sessionDecay ?: 8),
@@ -57,7 +55,7 @@ class PetRepository(private val db: HuellitasDatabase) {
             activityLevel = CareEngine.applySessionDecay(pet.activityLevel, defs[NeedType.ACTIVIDAD.name]?.sessionDecay ?: 8),
             rest = CareEngine.applySessionDecay(pet.rest, defs[NeedType.DESCANSO.name]?.sessionDecay ?: 8),
             affection = CareEngine.applySessionDecay(pet.affection, defs[NeedType.AFECTO.name]?.sessionDecay ?: 8),
-            lastSessionEpochDay = today
+            lastSessionEpochDay = now
         )
         db.virtualPetDao().update(decayed)
         return decayed

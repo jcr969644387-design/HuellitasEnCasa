@@ -23,8 +23,8 @@ interface FoodItemDao {
     @Query("SELECT * FROM food_items WHERE species_id = :speciesId OR species_id IS NULL ORDER BY RANDOM() LIMIT :limit")
     suspend fun getRandomForSpecies(speciesId: Long, limit: Int): List<FoodItemEntity>
 
-    @Query("SELECT * FROM food_items WHERE (species_id = :speciesId OR species_id IS NULL) AND is_appropriate = 1 ORDER BY RANDOM() LIMIT :limit")
-    suspend fun getAppropriateForSpecies(speciesId: Long, limit: Int): List<FoodItemEntity>
+    @Query("SELECT * FROM food_items WHERE (species_id = :speciesId OR species_id IS NULL) AND category = 'ALIMENTO_BUENO'")
+    suspend fun getGoodFoodsForSpecies(speciesId: Long): List<FoodItemEntity>
 
     @Query("SELECT COUNT(*) FROM food_items")
     suspend fun count(): Int
@@ -70,6 +70,9 @@ interface HomeChallengeDao {
 
     @Query("SELECT COUNT(*) FROM home_challenges WHERE virtual_pet_id = :petId")
     suspend fun countAllForPet(petId: Long): Int
+
+    @Query("SELECT DISTINCT home_item_id FROM home_challenges WHERE virtual_pet_id = :petId AND placed_correctly = 1")
+    suspend fun getCorrectlyPlacedItemIds(petId: Long): List<Long>
 }
 
 @Dao

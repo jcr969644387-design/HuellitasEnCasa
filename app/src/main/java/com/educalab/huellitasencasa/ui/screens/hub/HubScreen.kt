@@ -73,8 +73,9 @@ class HubViewModel(private val petRepo: PetRepository) : ViewModel() {
 
 private data class ModuleDef(val title: String, val subtitle: String, val icon: String, val color: androidx.compose.ui.graphics.Color, val route: String)
 
+// "Hogar" ya no aparece aquí: se arma una única vez, justo después de adoptar
+// (ver HuellitasNavGraph), y no vuelve a mostrarse como módulo reingresable.
 private val modules = listOf(
-    ModuleDef("Hogar", "Prepara su espacio", "ic_mod_hogar", HuellitasTeal, "home_setup"),
     ModuleDef("Comida", "Alimenta e hidrata", "ic_mod_alimentacion", HuellitasOrange, "feeding"),
     ModuleDef("Higiene", "Aseo y limpieza", "ic_mod_higiene", HuellitasSky, "hygiene"),
     ModuleDef("Actividad", "Juego y descanso", "ic_mod_actividad", HuellitasYellow, "activity"),

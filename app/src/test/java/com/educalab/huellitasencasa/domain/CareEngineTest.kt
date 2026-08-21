@@ -48,9 +48,21 @@ class CareEngineTest {
     }
 
     @Test
-    fun `shouldApplyDecay is true only when a new calendar day has passed`() {
-        assertFalse(CareEngine.shouldApplyDecay(lastSessionEpochDay = 100, todayEpochDay = 100))
-        assertTrue(CareEngine.shouldApplyDecay(lastSessionEpochDay = 100, todayEpochDay = 101))
+    fun `shouldApplyDecay is true only once the real-time interval has elapsed`() {
+        val lastSession = 1_000_000L
+        assertFalse(CareEngine.shouldApplyDecay(lastSessionAtMillis = lastSession, nowMillis = lastSession + 1_000L))
+        assertFalse(
+            CareEngine.shouldApplyDecay(
+                lastSessionAtMillis = lastSession,
+                nowMillis = lastSession + CareEngine.DECAY_INTERVAL_MILLIS - 1
+            )
+        )
+        assertTrue(
+            CareEngine.shouldApplyDecay(
+                lastSessionAtMillis = lastSession,
+                nowMillis = lastSession + CareEngine.DECAY_INTERVAL_MILLIS
+            )
+        )
     }
 
     @Test

@@ -1,24 +1,22 @@
 package com.educalab.huellitasencasa.ui.screens.home
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -33,7 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -50,6 +47,7 @@ import com.educalab.huellitasencasa.data.repository.ProgressRepository
 import com.educalab.huellitasencasa.domain.logic.WellbeingCalculator
 import com.educalab.huellitasencasa.domain.model.SpeciesCode
 import com.educalab.huellitasencasa.ui.components.DraggableCard
+import com.educalab.huellitasencasa.ui.components.DropTargetRegistry
 import com.educalab.huellitasencasa.ui.components.DropZoneBox
 import com.educalab.huellitasencasa.ui.components.DropZoneState
 import com.educalab.huellitasencasa.ui.components.PetMood
@@ -97,6 +95,9 @@ class HomeSetupViewModel(
             _pet.value = p
             val species = petRepo.getSpecies(p.speciesId)
             _items.value = species?.let { contentRepo.homeItemsFor(it.code) }.orEmpty()
+            // Recupera lo que ya se colocó antes, para que el hogar no se reinicie cada vez
+            // que se entra a esta pantalla.
+            _placedIds.value = contentRepo.completedHomeItemIds(petId)
         }
     }
 
@@ -120,7 +121,7 @@ class HomeSetupViewModel(
 }
 
 @Composable
-fun HomeSetupScreen(profileId: Long, petId: Long) {
+fun HomeSetupScreen(profileId: Long, petId: Long, onCompleted: () -> Unit = {}) {
     val context = LocalContext.current
     val app = context.applicationContext as HuellitasApplication
     val vm: HomeSetupViewModel = viewModel(factory = AppViewModelFactory(app) {
@@ -153,9 +154,11 @@ fun HomeSetupScreen(profileId: Long, petId: Long) {
 
     val registry = rememberDropTargetRegistry()
     val pendingItems = items.filter { it.id !in placedIds }
-    val placedItems = items.filter { it.id in placedIds }
     var hoveredZoneId by remember { mutableStateOf<String?>(null) }
-    val zoneRows = zoneLabels.entries.toList().chunked(3)
+    val zoneList = zoneLabels.entries.toList()
+    val leftZones = zoneList.take(3)
+    val rightZones = zoneList.drop(3)
+    val isComplete = pendingItems.isEmpty() && items.isNotEmpty()
 
     Column(
         modifier = Modifier
@@ -165,7 +168,7 @@ fun HomeSetupScreen(profileId: Long, petId: Long) {
     ) {
         Text("Prepara el hogar", style = MaterialTheme.typography.headlineSmall)
         Text(
-            "Arrastra cada objeto hasta la zona donde crees que pertenece.",
+            "Arrastra cada objeto hasta la zona donde crees que pertenece, alrededor de tu mascota.",
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(bottom = 8.dp)
         )
@@ -177,79 +180,38 @@ fun HomeSetupScreen(profileId: Long, petId: Long) {
             species = speciesCode,
             mood = mood,
             accent = HuellitasTeal,
-            petSize = 108.dp,
-            sceneHeight = 400.dp,
-            petTopPadding = 20.dp
+            petSize = 128.dp,
+            sceneHeight = 300.dp,
+            petTopPadding = 40.dp
         ) {
             Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp, vertical = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.align(Alignment.CenterStart).padding(start = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Objetos ya colocados, a tamaño real, justo delante de la mascota
-                if (placedItems.isNotEmpty()) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        placedItems.forEach { p ->
-                            Box(
-                                modifier = Modifier
-                                    .size(52.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.White.copy(alpha = 0.85f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(DrawableCatalog.resolve(p.iconRes)),
-                                    contentDescription = p.name,
-                                    tint = Color.Unspecified,
-                                    modifier = Modifier.size(42.dp)
-                                )
-                            }
-                        }
-                    }
+                leftZones.forEach { (zoneId, label) ->
+                    HomeZoneChip(
+                        zoneId = zoneId,
+                        label = label,
+                        registry = registry,
+                        items = items,
+                        placedIds = placedIds,
+                        hoveredZoneId = hoveredZoneId
+                    )
                 }
-                zoneRows.forEach { rowZones ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                        rowZones.forEach { (zoneId, label) ->
-                            val placedHere = items.any { it.category == zoneId && it.id in placedIds }
-                            val zoneState = when {
-                                hoveredZoneId == zoneId -> DropZoneState.RESALTADA
-                                placedHere -> DropZoneState.LLENA
-                                else -> DropZoneState.VACIA
-                            }
-                            DropZoneBox(
-                                id = zoneId,
-                                registry = registry,
-                                state = zoneState,
-                                modifier = Modifier.weight(1f).height(64.dp)
-                            ) {
-                                Column(
-                                    modifier = Modifier.fillMaxSize().padding(4.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-                                    if (placedHere) {
-                                        Icon(
-                                            imageVector = Icons.Filled.CheckCircle,
-                                            contentDescription = "Zona completa",
-                                            tint = HuellitasLeaf,
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                    }
-                                    Text(
-                                        label,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                        maxLines = 2
-                                    )
-                                }
-                            }
-                        }
-                    }
+            }
+            Column(
+                modifier = Modifier.align(Alignment.CenterEnd).padding(end = 10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                rightZones.forEach { (zoneId, label) ->
+                    HomeZoneChip(
+                        zoneId = zoneId,
+                        label = label,
+                        registry = registry,
+                        items = items,
+                        placedIds = placedIds,
+                        hoveredZoneId = hoveredZoneId
+                    )
                 }
             }
         }
@@ -290,8 +252,67 @@ fun HomeSetupScreen(profileId: Long, petId: Long) {
                 }
             }
         }
-        if (pendingItems.isEmpty() && items.isNotEmpty()) {
+        if (isComplete) {
+            Spacer(Modifier.height(4.dp))
             Text("¡Hogar completo! Has colocado todos los objetos.", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(12.dp))
+            Button(
+                onClick = onCompleted,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Continuar con ${currentPet?.name ?: "tu mascota"}")
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeZoneChip(
+    zoneId: String,
+    label: String,
+    registry: DropTargetRegistry,
+    items: List<HomeItemEntity>,
+    placedIds: Set<Long>,
+    hoveredZoneId: String?
+) {
+    val placedItem = items.firstOrNull { it.category == zoneId && it.id in placedIds }
+    val zoneState = when {
+        hoveredZoneId == zoneId -> DropZoneState.RESALTADA
+        placedItem != null -> DropZoneState.LLENA
+        else -> DropZoneState.VACIA
+    }
+    DropZoneBox(
+        id = zoneId,
+        registry = registry,
+        state = zoneState,
+        modifier = Modifier.width(90.dp).height(68.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            if (placedItem != null) {
+                Icon(
+                    painter = painterResource(DrawableCatalog.resolve(placedItem.iconRes)),
+                    contentDescription = placedItem.name,
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(30.dp)
+                )
+                Icon(
+                    imageVector = Icons.Filled.CheckCircle,
+                    contentDescription = "Zona completa",
+                    tint = HuellitasLeaf,
+                    modifier = Modifier.size(12.dp)
+                )
+            } else {
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelSmall,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    maxLines = 2
+                )
+            }
         }
     }
 }

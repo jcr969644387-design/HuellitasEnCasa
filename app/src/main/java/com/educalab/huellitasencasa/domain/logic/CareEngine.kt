@@ -12,6 +12,8 @@ object CareEngine {
     const val MAX_VALUE = 100
     /** Piso protector: la mascota nunca aparece en un estado crítico solo por el paso del tiempo. */
     const val PROTECTED_FLOOR = 15
+    /** Cada cuánto tiempo real puede volver a aplicarse el descenso suave (no punitivo). */
+    const val DECAY_INTERVAL_MILLIS = 2L * 60L * 60L * 1000L
 
     fun clamp(value: Int): Int = value.coerceIn(MIN_VALUE, MAX_VALUE)
 
@@ -23,18 +25,22 @@ object CareEngine {
 
     /**
      * Aplica el suave descenso de una nueva sesión de juego. Nunca se llama por temporizadores
-     * en segundo plano: solo se invoca una vez, al detectar que ha pasado al menos un día
-     * calendario desde la última sesión registrada. El descenso está limitado a [maxDecay]
-     * sin importar cuántos días hayan pasado realmente, y jamás baja del piso protector.
+     * en segundo plano: solo se invoca al detectar que ha pasado al menos [DECAY_INTERVAL_MILLIS]
+     * desde la última sesión registrada. El descenso está limitado a [maxDecay] sin importar
+     * cuánto tiempo haya pasado realmente, y jamás baja del piso protector.
      */
     fun applySessionDecay(currentValue: Int, maxDecay: Int): Int {
         val decayed = currentValue - maxDecay.coerceAtLeast(0)
         return decayed.coerceIn(PROTECTED_FLOOR, MAX_VALUE)
     }
 
-    /** true si han pasado uno o más días de calendario desde la última sesión registrada. */
-    fun shouldApplyDecay(lastSessionEpochDay: Long, todayEpochDay: Long): Boolean =
-        todayEpochDay > lastSessionEpochDay
+    /**
+     * true si ha pasado suficiente tiempo real desde la última sesión registrada como para
+     * aplicar un nuevo descenso. Antes se comparaba por día de calendario, lo que hacía que los
+     * indicadores nunca se movieran dentro de una misma sesión de juego real.
+     */
+    fun shouldApplyDecay(lastSessionAtMillis: Long, nowMillis: Long): Boolean =
+        nowMillis - lastSessionAtMillis >= DECAY_INTERVAL_MILLIS
 
     data class PetIndicators(
         val feeding: Int,
