@@ -169,18 +169,10 @@ fun FeedingScreen(profileId: Long, petId: Long) {
         Text("Alimentación y agua", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(8.dp))
         PetSceneCard(species = speciesCode, mood = effectiveMood, accent = HuellitasOrange, modifier = Modifier.padding(bottom = 12.dp)) {
-            AnimatedVisibility(
+            FloatingHearts(
                 visible = celebrating,
-                modifier = Modifier.align(Alignment.TopCenter).padding(top = 10.dp),
-                enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
-                exit = fadeOut()
-            ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    repeat(3) {
-                        Icon(Icons.Filled.Favorite, contentDescription = null, tint = HuellitasCoral, modifier = Modifier.size(20.dp))
-                    }
-                }
-            }
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 10.dp)
+            )
         }
         IndicatorBar("Alimentación", currentPet.feeding, HuellitasOrange)
         Spacer(Modifier.height(6.dp))
@@ -264,6 +256,28 @@ fun FeedingScreen(profileId: Long, petId: Long) {
             Text("Tarjeta ${index + 1} de ${cards.size}", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
         } else if (cards.isNotEmpty()) {
             Text("¡Completaste esta ronda de clasificación! Vuelve más tarde para practicar de nuevo.", style = MaterialTheme.typography.bodyLarge)
+        }
+    }
+}
+
+/**
+ * Corazones flotantes que aparecen brevemente al alimentar o dar agua. Se define como
+ * composable propio (en vez de un [AnimatedVisibility] inline dentro de otro Column) para que
+ * la resolución de sobrecargas no confunda la variante de [AnimatedVisibility] con la extensión
+ * de ColumnScope del mismo nombre.
+ */
+@Composable
+private fun FloatingHearts(visible: Boolean, modifier: Modifier = Modifier) {
+    AnimatedVisibility(
+        visible = visible,
+        modifier = modifier,
+        enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
+        exit = fadeOut()
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            repeat(3) {
+                Icon(Icons.Filled.Favorite, contentDescription = null, tint = HuellitasCoral, modifier = Modifier.size(20.dp))
+            }
         }
     }
 }
