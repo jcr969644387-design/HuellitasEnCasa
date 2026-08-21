@@ -76,10 +76,10 @@ fun PetIllustration(
         val h = this.size.height
         val bob = sin(breath * Math.PI).toFloat() * h * 0.015f
 
-        val bodyCenter = Offset(w / 2f, h * 0.62f + bob)
-        val headCenter = Offset(w / 2f, h * 0.38f + bob)
-        val bodyRadius = w * 0.32f
-        val headRadius = w * 0.27f
+        val bodyCenter = Offset(w / 2f, h * 0.64f + bob)
+        val headCenter = Offset(w / 2f, h * 0.37f + bob)
+        val bodyRadius = w * 0.29f
+        val headRadius = w * 0.3f
 
         // Sombra suave
         drawOval(
@@ -101,6 +101,10 @@ fun PetIllustration(
         drawCircle(color = palette.accent, radius = headRadius * 0.5f, center = Offset(headCenter.x, headCenter.y + headRadius * 0.35f))
         // Hocico/pico especifico de la especie, para que se distinga de un huevo liso
         drawSpeciesSnout(species, headCenter, headRadius)
+        // Sonrojo, para una expresión más cálida y menos plana
+        val blushColor = Color(0xFFFFAFAF).copy(alpha = 0.4f)
+        drawCircle(blushColor, radius = headRadius * 0.16f, center = Offset(headCenter.x - headRadius * 0.68f, headCenter.y + headRadius * 0.1f))
+        drawCircle(blushColor, radius = headRadius * 0.16f, center = Offset(headCenter.x + headRadius * 0.68f, headCenter.y + headRadius * 0.1f))
 
         drawFace(mood, palette, headCenter, headRadius, blink)
     }
@@ -228,6 +232,12 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawBlinkingEye(
         color = color,
         topLeft = Offset(center.x - radius, center.y - eyeHeight / 2f),
         size = Size(radius * 2f, eyeHeight)
+    )
+    // Brillo del ojo: aporta mucha vida a la ilustración con muy poco costo
+    drawCircle(
+        color = Color.White.copy(alpha = (1f - blink).coerceIn(0f, 1f)),
+        radius = radius * 0.32f,
+        center = Offset(center.x - radius * 0.32f, center.y - eyeHeight * 0.22f)
     )
 }
 

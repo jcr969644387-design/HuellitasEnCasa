@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
@@ -20,6 +22,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -36,7 +41,10 @@ import com.educalab.huellitasencasa.data.repository.ContentRepository
 import com.educalab.huellitasencasa.data.repository.PetRepository
 import com.educalab.huellitasencasa.data.repository.ProgressRepository
 import com.educalab.huellitasencasa.domain.model.NeedType
+import com.educalab.huellitasencasa.domain.model.SpeciesCode
 import com.educalab.huellitasencasa.ui.components.IndicatorBar
+import com.educalab.huellitasencasa.ui.components.PetMood
+import com.educalab.huellitasencasa.ui.components.PetSceneCard
 import com.educalab.huellitasencasa.ui.components.TipBubble
 import com.educalab.huellitasencasa.ui.theme.HuellitasOrange
 import com.educalab.huellitasencasa.ui.theme.HuellitasSky
@@ -111,9 +119,27 @@ fun FeedingScreen(profileId: Long, petId: Long) {
     LaunchedEffect(petId) { vm.load(petId) }
     val currentPet = pet ?: return
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    var speciesCode by remember { mutableStateOf(SpeciesCode.PERRO) }
+    LaunchedEffect(currentPet.speciesId) {
+        app.petRepository.getSpecies(currentPet.speciesId)?.let {
+            speciesCode = runCatching { SpeciesCode.valueOf(it.code) }.getOrDefault(SpeciesCode.PERRO)
+        }
+    }
+    val mood = when {
+        currentPet.feeding < 40 || currentPet.hydration < 40 -> PetMood.HAMBRIENTO
+        currentPet.feeding >= 70 && currentPet.hydration >= 70 -> PetMood.FELIZ
+        else -> PetMood.NEUTRAL
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
         Text("Alimentación y agua", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(8.dp))
+        PetSceneCard(species = speciesCode, mood = mood, accent = HuellitasOrange, modifier = Modifier.padding(bottom = 12.dp))
         IndicatorBar("Alimentación", currentPet.feeding, HuellitasOrange)
         Spacer(Modifier.height(6.dp))
         IndicatorBar("Hidratación", currentPet.hydration, HuellitasSky)
