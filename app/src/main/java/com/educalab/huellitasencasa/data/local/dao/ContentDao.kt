@@ -41,8 +41,8 @@ interface FoodAttemptDao {
     @Query("SELECT COUNT(*) FROM food_attempts WHERE user_profile_id = :userProfileId")
     suspend fun countAll(userProfileId: Long): Int
 
-    @Query("SELECT DISTINCT food_item_id FROM food_attempts WHERE user_profile_id = :userProfileId AND was_correct = 1")
-    suspend fun getCorrectlyAnsweredItemIds(userProfileId: Long): List<Long>
+    @Query("SELECT DISTINCT food_item_id FROM food_attempts WHERE user_profile_id = :userProfileId AND timestamp >= :sinceMillis")
+    suspend fun getRecentlyAttemptedItemIds(userProfileId: Long, sinceMillis: Long): List<Long>
 
     @Query("SELECT * FROM food_attempts WHERE user_profile_id = :userProfileId ORDER BY timestamp DESC LIMIT :limit")
     fun observeRecent(userProfileId: Long, limit: Int = 10): Flow<List<FoodAttemptEntity>>
@@ -113,6 +113,6 @@ interface ScenarioAttemptDao {
     @Query("SELECT * FROM scenario_attempts WHERE user_profile_id = :userProfileId AND was_correct = 0 ORDER BY timestamp DESC LIMIT :limit")
     suspend fun getRecentMistakes(userProfileId: Long, limit: Int = 10): List<ScenarioAttemptEntity>
 
-    @Query("SELECT DISTINCT scenario_id FROM scenario_attempts WHERE user_profile_id = :userProfileId AND was_correct = 1")
-    suspend fun getCorrectlyAnsweredScenarioIds(userProfileId: Long): List<Long>
+    @Query("SELECT DISTINCT scenario_id FROM scenario_attempts WHERE user_profile_id = :userProfileId AND timestamp >= :sinceMillis")
+    suspend fun getRecentlyAnsweredScenarioIds(userProfileId: Long, sinceMillis: Long): List<Long>
 }

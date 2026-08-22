@@ -89,8 +89,13 @@ fun HuellitasNavGraph() {
                 session.setActivePet(activePet.id)
                 val species = app.petRepository.getSpecies(activePet.speciesId)
                 val homeItems = species?.let { app.contentRepository.homeItemsFor(it.code) }.orEmpty()
+                // Igual que en HomeSetupScreen: el armado inicial solo pide UN objeto por zona,
+                // así que la finalización se mide contra ese mismo objeto "principal" por
+                // categoría, no contra todas las alternativas de Entorno (que nunca se piden
+                // todas y quedarían "sin completar" para siempre).
+                val primaryHomeItems = homeItems.groupBy { it.category }.map { (_, group) -> group.first() }
                 val completed = app.contentRepository.completedHomeItemIds(activePet.id)
-                resolvedStart = if (homeItems.isNotEmpty() && homeItems.any { it.id !in completed }) {
+                resolvedStart = if (primaryHomeItems.isNotEmpty() && primaryHomeItems.any { it.id !in completed }) {
                     // El hogar quedó a medio armar (se cerró la app antes de terminar): se retoma.
                     Destinations.HOME_SETUP
                 } else {

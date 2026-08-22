@@ -162,8 +162,11 @@ fun HubScreen(petId: Long, onNavigate: (String) -> Unit) {
     val effectiveMood = if (sleeping) PetMood.DORMIDO else baseMood
 
     val placedItems = homeItems.filter { it.id in placedIds }
-    val entornoItems = placedItems.filter { it.category == "ENTORNO" }
-    var featuredEntornoId by remember(entornoItems) { mutableStateOf(entornoItems.firstOrNull()?.id) }
+    // El armado inicial solo pide UN objeto de "Entorno", pero todas las alternativas
+    // compatibles con la especie quedan disponibles acá para cambiarlo cuando quieras.
+    val entornoOptions = homeItems.filter { it.category == "ENTORNO" }
+    val placedEntornoItem = placedItems.firstOrNull { it.category == "ENTORNO" }
+    var featuredEntornoId by remember(placedEntornoItem) { mutableStateOf(placedEntornoItem?.id) }
     var showEntornoPicker by remember { mutableStateOf(false) }
 
     val sceneItems = listOfNotNull(
@@ -172,7 +175,7 @@ fun HubScreen(petId: Long, onNavigate: (String) -> Unit) {
         placedItems.firstOrNull { it.category == "CAMA" },
         placedItems.firstOrNull { it.category == "JUGUETE" },
         placedItems.firstOrNull { it.category == "HIGIENE" },
-        entornoItems.firstOrNull { it.id == featuredEntornoId }
+        entornoOptions.firstOrNull { it.id == featuredEntornoId }
     )
     val leftItems = sceneItems.take(3)
     val rightItems = sceneItems.drop(3)
@@ -283,7 +286,7 @@ fun HubScreen(petId: Long, onNavigate: (String) -> Unit) {
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(bottom = 10.dp)
                     )
-                    entornoItems.forEach { item ->
+                    entornoOptions.forEach { item ->
                         val selected = item.id == featuredEntornoId
                         Row(
                             modifier = Modifier

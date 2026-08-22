@@ -56,6 +56,13 @@ object DrawableCatalog {
         "item_silla" -> R.drawable.item_silla
         "item_planta_interior" -> R.drawable.item_planta_interior
         "item_ventana_luz" -> R.drawable.item_ventana_luz
+        "item_nido_virutas" -> R.drawable.item_nido_virutas
+        "item_percha" -> R.drawable.item_percha
+        "item_tunel" -> R.drawable.item_tunel
+        "item_rueda_ejercicio" -> R.drawable.item_rueda_ejercicio
+        "item_columpio" -> R.drawable.item_columpio
+        "item_bano_arena" -> R.drawable.item_bano_arena
+        "item_bandeja_bano" -> R.drawable.item_bandeja_bano
         // Categorías de alimentos
         "food_fruta_verdura" -> R.drawable.food_fruta_verdura
         "food_carne_pescado" -> R.drawable.food_carne_pescado

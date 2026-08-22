@@ -97,7 +97,12 @@ class HomeSetupViewModel(
             val p = petRepo.getPet(petId) ?: return@launch
             _pet.value = p
             val species = petRepo.getSpecies(p.speciesId)
+            // Para armar el hogar por primera vez solo se pide UN objeto por zona (aunque
+            // "Entorno" tenga varias opciones compatibles con la especie): el resto queda
+            // disponible para cambiarlo después, ya en el centro principal.
             _items.value = species?.let { contentRepo.homeItemsFor(it.code) }.orEmpty()
+                .groupBy { it.category }
+                .map { (_, group) -> group.first() }
             // Recupera lo que ya se colocó antes, para que el hogar no se reinicie cada vez
             // que se entra a esta pantalla.
             _placedIds.value = contentRepo.completedHomeItemIds(petId)

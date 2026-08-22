@@ -46,9 +46,9 @@ class SeedProviderTest {
     }
 
     @Test
-    fun `seeding inserts fifty food items`() = runTest {
+    fun `seeding inserts sixty food items`() = runTest {
         SeedProvider.seedIfNeeded(db)
-        assertEquals(50, db.foodItemDao().count())
+        assertEquals(60, db.foodItemDao().count())
     }
 
     @Test
@@ -73,9 +73,9 @@ class SeedProviderTest {
     }
 
     @Test
-    fun `seeding ten home items`() = runTest {
+    fun `seeding seventeen home items`() = runTest {
         SeedProvider.seedIfNeeded(db)
-        assertEquals(10, db.homeItemDao().count())
+        assertEquals(17, db.homeItemDao().count())
     }
 
     @Test
@@ -83,7 +83,7 @@ class SeedProviderTest {
         SeedProvider.seedIfNeeded(db)
         SeedProvider.seedIfNeeded(db)
         assertEquals(5, db.petSpeciesDao().count())
-        assertEquals(50, db.foodItemDao().count())
+        assertEquals(60, db.foodItemDao().count())
         assertEquals(30, db.missionDao().count())
     }
 }

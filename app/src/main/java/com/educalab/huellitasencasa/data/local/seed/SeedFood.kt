@@ -67,7 +67,18 @@ object SeedFood {
     Food("Dejar salir al ave a un espacio seguro y supervisado", "SITUACION", "food_pienso", true, "El tiempo de vuelo supervisado es clave para el bienestar físico del ave.", "AVE"),
     Food("Cepillar al perro de pelo largo cada semana", "SITUACION", "food_pienso", true, "El cepillado regular evita nudos y ayuda a detectar heridas o parásitos a tiempo.", "PERRO"),
     Food("No cambiar nunca el sustrato del hámster", "SITUACION", "food_pienso", false, "Un sustrato sucio genera humedad y malos olores que afectan la salud del hámster.", "HAMSTER"),
-    Food("Chocolate con leche como premio", "ALIMENTO_MALO", "food_dulce_prohibido", false, "Ningún tipo de chocolate es seguro para mascotas, ni siquiera en pequeñas cantidades.", null),    )
+    Food("Chocolate con leche como premio", "ALIMENTO_MALO", "food_dulce_prohibido", false, "Ningún tipo de chocolate es seguro para mascotas, ni siquiera en pequeñas cantidades.", null),
+    Food("Croquetas específicas para conejo", "ALIMENTO_BUENO", "food_pienso", true, "El pienso para conejo aporta la fibra y los nutrientes que necesita a diario.", "CONEJO"),
+    Food("Brócoli en trocitos pequeños", "ALIMENTO_BUENO", "food_fruta_verdura", true, "En pequeñas cantidades, el brócoli aporta vitaminas al conejo y al hámster.", null),
+    Food("Mijo en espiga", "ALIMENTO_BUENO", "food_pienso", true, "El mijo en espiga es un premio natural que las aves disfrutan picotear.", "AVE"),
+    Food("Cáscara de huevo triturada", "ALIMENTO_BUENO", "food_carne_pescado", true, "Aporta calcio extra al ave, útil sobre todo para hembras ponedoras.", "AVE"),
+    Food("Piña sin cáscara en trozos", "ALIMENTO_BUENO", "food_fruta_verdura", true, "La piña sin cáscara es un premio jugoso y seguro con moderación.", null),
+    Food("Chocolate blanco", "ALIMENTO_MALO", "food_dulce_prohibido", false, "Aunque tiene menos teobromina, sigue siendo un dulce que no aporta nada bueno y puede engordar en exceso.", null),
+    Food("Huesos crudos grandes sin supervisión", "ALIMENTO_MALO", "food_hueso_prohibido", false, "Incluso crudos, los huesos grandes pueden romper piezas dentales o causar atragantamiento.", "PERRO"),
+    Food("Restos de comida muy condimentada", "ALIMENTO_MALO", "food_dulce_prohibido", false, "Las especias y condimentos irritan el estómago de la mayoría de las mascotas.", null),
+    Food("Pesar a la mascota una vez al mes", "SITUACION", "food_pienso", true, "Controlar el peso con regularidad ayuda a detectar cambios de salud a tiempo.", null),
+    Food("Dejar plantas tóxicas al alcance de la mascota", "SITUACION", "food_planta_toxica", false, "Algunas plantas comunes de interior son tóxicas; deben quedar fuera de su alcance.", null)
+    )
 
     /** Construye las entidades resolviendo el código de especie a su ID real ya insertado. */
     fun buildEntities(speciesIdByCode: Map<String, Long>): List<FoodItemEntity> =

@@ -11,14 +11,25 @@ import com.educalab.huellitasencasa.domain.logic.ScenarioGrader
 
 class ContentRepository(private val db: HuellitasDatabase) {
 
+    companion object {
+        /** Tiempo real que debe pasar antes de que una tarjeta/escenario ya visto pueda repetirse. */
+        private const val QUIZ_COOLDOWN_MILLIS = 6L * 60L * 60L * 1000L
+    }
+
     // --- Alimentación / clasificación ---
     /**
-     * Tarjetas para "Clasifica y Cuida", excluyendo las que este perfil ya respondió
-     * correctamente antes. Así, salir y volver a entrar no repite lo ya aprendido.
+     * Tarjetas para "Clasifica y Cuida", evitando repetir (durante [QUIZ_COOLDOWN_MILLIS])
+     * cualquier tarjeta que este perfil ya haya respondido, sin importar si acertó o no. Así,
+     * salir y volver a entrar trae variaciones en vez de la misma ronda de siempre. Si el
+     * enfriamiento dejara muy pocas tarjetas disponibles, se usa el mazo completo para no
+     * mostrar una ronda vacía o demasiado corta.
      */
     suspend fun randomFoodCards(speciesId: Long, userProfileId: Long, count: Int = 10): List<FoodItemEntity> {
-        val answered = db.foodAttemptDao().getCorrectlyAnsweredItemIds(userProfileId).toSet()
-        val pool = db.foodItemDao().getAllForSpecies(speciesId).filter { it.id !in answered }
+        val since = System.currentTimeMillis() - QUIZ_COOLDOWN_MILLIS
+        val recent = db.foodAttemptDao().getRecentlyAttemptedItemIds(userProfileId, since).toSet()
+        val fullPool = db.foodItemDao().getAllForSpecies(speciesId)
+        val freshPool = fullPool.filter { it.id !in recent }
+        val pool = if (freshPool.size >= count) freshPool else fullPool
         return pool.shuffled().take(count)
     }
 
@@ -70,12 +81,15 @@ class ContentRepository(private val db: HuellitasDatabase) {
 
     // --- Señales de bienestar ---
     /**
-     * Escenarios de "¿Qué harías?", excluyendo los que este perfil ya respondió correctamente
-     * antes. Igual que con la comida: salir y volver a entrar no repite lo ya aprendido.
+     * Escenarios de "¿Qué harías?", con el mismo enfriamiento de [QUIZ_COOLDOWN_MILLIS] que la
+     * comida: evita repetir lo ya respondido recientemente y trae variaciones al volver a entrar.
      */
     suspend fun randomScenarios(speciesId: Long, userProfileId: Long, count: Int = 6): List<WellbeingScenarioEntity> {
-        val answered = db.scenarioAttemptDao().getCorrectlyAnsweredScenarioIds(userProfileId).toSet()
-        val pool = db.wellbeingScenarioDao().getAllForSpecies(speciesId).filter { it.id !in answered }
+        val since = System.currentTimeMillis() - QUIZ_COOLDOWN_MILLIS
+        val recent = db.scenarioAttemptDao().getRecentlyAnsweredScenarioIds(userProfileId, since).toSet()
+        val fullPool = db.wellbeingScenarioDao().getAllForSpecies(speciesId)
+        val freshPool = fullPool.filter { it.id !in recent }
+        val pool = if (freshPool.size >= count) freshPool else fullPool
         return pool.shuffled().take(count)
     }
 

@@ -27,16 +27,58 @@ object SeedHomeItems {
             compatibleSpeciesCsv = "PERRO,GATO,CONEJO"
         ),
         HomeItemEntity(
+            category = "CAMA", name = "Nido de virutas",
+            iconRes = "item_nido_virutas",
+            description = "Virutas o heno mullido para que el hámster se haga su propio nido calentito.",
+            compatibleSpeciesCsv = "HAMSTER"
+        ),
+        HomeItemEntity(
+            category = "CAMA", name = "Percha para dormir",
+            iconRes = "item_percha",
+            description = "Las aves descansan de pie, sobre una percha firme y a buena altura.",
+            compatibleSpeciesCsv = "AVE"
+        ),
+        HomeItemEntity(
             category = "JUGUETE", name = "Pelota de juego",
             iconRes = "item_juguete_pelota",
             description = "Estimula el juego activo y ayuda a gastar energía de forma divertida.",
             compatibleSpeciesCsv = "PERRO,GATO"
         ),
         HomeItemEntity(
+            category = "JUGUETE", name = "Túnel de juego",
+            iconRes = "item_tunel",
+            description = "Los conejos disfrutan explorar y esconderse en túneles seguros.",
+            compatibleSpeciesCsv = "CONEJO"
+        ),
+        HomeItemEntity(
+            category = "JUGUETE", name = "Rueda de ejercicio",
+            iconRes = "item_rueda_ejercicio",
+            description = "Una rueda silenciosa y del tamaño correcto ayuda al hámster a gastar energía de noche.",
+            compatibleSpeciesCsv = "HAMSTER"
+        ),
+        HomeItemEntity(
+            category = "JUGUETE", name = "Columpio para aves",
+            iconRes = "item_columpio",
+            description = "Un columpio estimula el equilibrio y el juego natural del ave.",
+            compatibleSpeciesCsv = "AVE"
+        ),
+        HomeItemEntity(
             category = "HIGIENE", name = "Cepillo de aseo",
             iconRes = "item_cepillo",
             description = "Ayuda a mantener el pelaje limpio y sin nudos; también fortalece el vínculo.",
             compatibleSpeciesCsv = "PERRO,GATO,CONEJO"
+        ),
+        HomeItemEntity(
+            category = "HIGIENE", name = "Baño de arena",
+            iconRes = "item_bano_arena",
+            description = "El hámster se asea solo revolcándose en arena especial, nunca con agua.",
+            compatibleSpeciesCsv = "HAMSTER"
+        ),
+        HomeItemEntity(
+            category = "HIGIENE", name = "Bandeja de baño",
+            iconRes = "item_bandeja_bano",
+            description = "Un baño poco profundo permite al ave limpiar y acomodar sus plumas.",
+            compatibleSpeciesCsv = "AVE"
         ),
         HomeItemEntity(
             category = "ENTORNO", name = "Correa para paseo",
