@@ -131,7 +131,7 @@ fun WellbeingScreen(profileId: Long, petId: Long) {
         } else if (scenarios.isNotEmpty()) {
             Text("¡Completaste esta ronda de escenarios! Vuelve más tarde para ver situaciones nuevas.", style = MaterialTheme.typography.bodyLarge)
         } else {
-            Text("¡Ya respondiste bien todas las situaciones de esta especie! Vuelve pronto por más contenido.", style = MaterialTheme.typography.bodyLarge)
+            Text("¡Ya completaste esta ronda de escenarios! Vuelve en unas horas para ver situaciones nuevas.", style = MaterialTheme.typography.bodyLarge)
         }
     }
 }

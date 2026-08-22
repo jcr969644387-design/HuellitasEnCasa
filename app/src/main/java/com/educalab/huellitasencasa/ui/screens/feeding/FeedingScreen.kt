@@ -259,7 +259,7 @@ fun FeedingScreen(profileId: Long, petId: Long) {
         } else if (cards.isNotEmpty()) {
             Text("¡Completaste esta ronda de clasificación! Vuelve más tarde para practicar de nuevo.", style = MaterialTheme.typography.bodyLarge)
         } else {
-            Text("¡Ya respondiste bien todas las tarjetas de esta especie! Vuelve pronto por más contenido.", style = MaterialTheme.typography.bodyLarge)
+            Text("¡Ya completaste esta ronda de clasificación! Vuelve en unas horas para practicar con nuevas tarjetas.", style = MaterialTheme.typography.bodyLarge)
         }
     }
 }
