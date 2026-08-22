@@ -72,6 +72,17 @@ private fun toyFor(species: SpeciesCode): SpeciesToy = when (species) {
     SpeciesCode.AVE -> SpeciesToy(DrawableCatalog.resolve("item_semillas"), "Arrastra las semillas hasta tu mascota para que picotee", "¡Picoteó las semillas con alegría!")
 }
 
+/**
+ * Las aves no se sacan a pasear: la actividad física que les corresponde es volar. Cada especie
+ * recibe la palabra y el mensaje que realmente le corresponden en vez de un "Pasear" genérico.
+ */
+private data class SpeciesOuting(val label: String, val message: String)
+
+private fun outingFor(species: SpeciesCode): SpeciesOuting = when (species) {
+    SpeciesCode.AVE -> SpeciesOuting("Volar", "Un buen vuelo por la jaula, energía renovada.")
+    else -> SpeciesOuting("Pasear", "Un buen paseo, energía renovada.")
+}
+
 class ActivityViewModel(
     private val petRepo: PetRepository,
     private val progressRepo: ProgressRepository
@@ -91,9 +102,21 @@ class ActivityViewModel(
     }
 
     fun play(profileId: Long, celebration: String) = act(profileId, NeedType.ACTIVIDAD, "JUGAR", 16, celebration)
-    fun walk(profileId: Long) = act(profileId, NeedType.ACTIVIDAD, "PASEAR", 14, "Un buen paseo, energía renovada.")
-    fun rest(profileId: Long) = act(profileId, NeedType.DESCANSO, "DEJAR_DESCANSAR", 18, "Ahora descansa tranquilo mientras duerme.")
+    fun walk(profileId: Long, message: String) = act(profileId, NeedType.ACTIVIDAD, "PASEAR", 14, message)
     fun affection(profileId: Long) = act(profileId, NeedType.AFECTO, "DAR_CARINO", 14, "Se siente muy querido.")
+
+    /** Empieza el descanso: fija el mensaje una vez y da el primer empujón al indicador. */
+    fun startResting(profileId: Long) = act(profileId, NeedType.DESCANSO, "DEJAR_DESCANSAR", 5, "Ahora descansa tranquilo mientras duerme.")
+
+    /** Sube el indicador de descanso poco a poco mientras la mascota sigue dormida, sin repetir el mensaje en cada paso. */
+    fun restTick(profileId: Long) {
+        val p = _pet.value ?: return
+        viewModelScope.launch {
+            petRepo.applyCareAction(p, NeedType.DESCANSO, "DEJAR_DESCANSAR", 5)
+        }
+    }
+
+    fun currentRest(): Int = _pet.value?.rest ?: 100
 
     private fun act(profileId: Long, need: NeedType, actionType: String, delta: Int, msg: String) {
         val p = _pet.value ?: return
@@ -125,10 +148,22 @@ fun ActivityScreen(profileId: Long, petId: Long) {
 
     val registry = rememberDropTargetRegistry()
     val toy = remember(speciesCode) { toyFor(speciesCode) }
+    val outing = remember(speciesCode) { outingFor(speciesCode) }
 
     // "Descansar" ahora sí duerme a la mascota (ojos cerrados) hasta que se vuelva a tocar el
-    // botón, en vez de ser una acción abstracta sin relación visual con el descanso.
+    // botón, en vez de ser una acción abstracta sin relación visual con el descanso. Mientras
+    // duerme, el indicador de descanso sube poco a poco (no de golpe), reflejando que se llena
+    // mientras la mascota realmente descansa.
     var resting by remember { mutableStateOf(false) }
+    LaunchedEffect(resting) {
+        if (resting) {
+            vm.startResting(profileId)
+            while (vm.currentRest() < 100) {
+                delay(900)
+                vm.restTick(profileId)
+            }
+        }
+    }
     var caressing by remember { mutableStateOf(false) }
     LaunchedEffect(caressing) {
         if (caressing) {
@@ -178,12 +213,9 @@ fun ActivityScreen(profileId: Long, petId: Long) {
 
         Spacer(Modifier.height(20.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            OutlinedButton(onClick = { vm.walk(profileId) }, modifier = Modifier.weight(1f)) { Text("Pasear") }
+            OutlinedButton(onClick = { vm.walk(profileId, outing.message) }, modifier = Modifier.weight(1f)) { Text(outing.label) }
             OutlinedButton(
-                onClick = {
-                    resting = !resting
-                    if (resting) vm.rest(profileId)
-                },
+                onClick = { resting = !resting },
                 modifier = Modifier.weight(1f)
             ) { Text(if (resting) "Despertar" else "Descansar") }
         }

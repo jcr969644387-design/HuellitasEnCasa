@@ -134,14 +134,16 @@ fun HygieneScreen(profileId: Long, petId: Long) {
         Text("Higiene", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(8.dp))
         PetSceneCard(species = speciesCode, mood = mood, accent = HuellitasSky, modifier = Modifier.padding(bottom = 12.dp)) {
+            // La zona donde se puede soltar la herramienta cubre casi toda la escena (no solo
+            // un recuadro pequeño sobre la mascota): así el arrastre siempre se registra, sin
+            // depender de acertar un punto exacto.
             DropZoneBox(
                 id = "PET",
                 registry = registry,
                 state = if (hoveringPet) DropZoneState.RESALTADA else DropZoneState.VACIA,
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 30.dp)
-                    .size(170.dp)
+                    .fillMaxSize()
+                    .padding(10.dp)
             ) {}
             // Un poco de "suciedad" visible durante el paso de limpiar el espacio, para que
             // el usuario tenga algo concreto que barrer con la escoba.
