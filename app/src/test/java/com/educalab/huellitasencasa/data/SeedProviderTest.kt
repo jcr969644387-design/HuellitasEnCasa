@@ -73,9 +73,9 @@ class SeedProviderTest {
     }
 
     @Test
-    fun `seeding eight home items`() = runTest {
+    fun `seeding ten home items`() = runTest {
         SeedProvider.seedIfNeeded(db)
-        assertEquals(8, db.homeItemDao().count())
+        assertEquals(10, db.homeItemDao().count())
     }
 
     @Test
