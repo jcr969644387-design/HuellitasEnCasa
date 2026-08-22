@@ -1,6 +1,7 @@
 package com.educalab.huellitasencasa.ui.screens.hub
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -66,7 +67,6 @@ import com.educalab.huellitasencasa.ui.theme.HuellitasTeal
 import com.educalab.huellitasencasa.ui.theme.HuellitasYellow
 import com.educalab.huellitasencasa.util.AppViewModelFactory
 import com.educalab.huellitasencasa.util.DrawableCatalog
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -156,13 +156,9 @@ fun HubScreen(petId: Long, onNavigate: (String) -> Unit) {
 
     // Interacciones locales de la escena: dormir (visual, no navega) y elegir el objeto de
     // entorno que se muestra (no persiste entre reinicios, pero no requiere tocar el esquema).
+    // Dormir es un interruptor manual: la mascota no despierta sola, hay que volver a tocar
+    // la cama para despertarla.
     var sleeping by remember { mutableStateOf(false) }
-    LaunchedEffect(sleeping) {
-        if (sleeping) {
-            delay(4000)
-            sleeping = false
-        }
-    }
     val effectiveMood = if (sleeping) PetMood.DORMIDO else baseMood
 
     val placedItems = homeItems.filter { it.id in placedIds }
@@ -183,7 +179,7 @@ fun HubScreen(petId: Long, onNavigate: (String) -> Unit) {
 
     fun handleItemTap(item: HomeItemEntity) {
         when (item.category) {
-            "CAMA" -> sleeping = true
+            "CAMA" -> sleeping = !sleeping
             "ENTORNO" -> showEntornoPicker = true
             else -> routeForCategory(item.category)?.let { onNavigate(it) }
         }
@@ -217,7 +213,11 @@ fun HubScreen(petId: Long, onNavigate: (String) -> Unit) {
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         leftItems.forEach { item ->
-                            HubHomeItemChip(item = item, onClick = { handleItemTap(item) })
+                            HubHomeItemChip(
+                                item = item,
+                                active = item.category == "CAMA" && sleeping,
+                                onClick = { handleItemTap(item) }
+                            )
                         }
                     }
                     Column(
@@ -225,7 +225,11 @@ fun HubScreen(petId: Long, onNavigate: (String) -> Unit) {
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         rightItems.forEach { item ->
-                            HubHomeItemChip(item = item, onClick = { handleItemTap(item) })
+                            HubHomeItemChip(
+                                item = item,
+                                active = item.category == "CAMA" && sleeping,
+                                onClick = { handleItemTap(item) }
+                            )
                         }
                     }
                 }
@@ -236,6 +240,14 @@ fun HubScreen(petId: Long, onNavigate: (String) -> Unit) {
         }
         Spacer(Modifier.height(10.dp))
         TipBubble(suggestion)
+        Spacer(Modifier.height(8.dp))
+        Text(
+            "Toca cada objeto junto a ${currentPet.name}: comida y agua abren Alimentación, el " +
+                "cepillo abre Higiene, el juguete abre Actividad, la cama la duerme (toca de nuevo " +
+                "para despertarla) y el entorno se puede cambiar.",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         Spacer(Modifier.height(14.dp))
         Text("Explora Huellitas", style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(8.dp))
@@ -302,12 +314,19 @@ fun HubScreen(petId: Long, onNavigate: (String) -> Unit) {
 }
 
 @Composable
-private fun HubHomeItemChip(item: HomeItemEntity, onClick: () -> Unit) {
+private fun HubHomeItemChip(item: HomeItemEntity, active: Boolean = false, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .size(60.dp)
             .clip(CircleShape)
             .background(Color.White.copy(alpha = 0.88f))
+            .then(
+                if (active) {
+                    Modifier.border(2.dp, HuellitasTeal, CircleShape)
+                } else {
+                    Modifier
+                }
+            )
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {

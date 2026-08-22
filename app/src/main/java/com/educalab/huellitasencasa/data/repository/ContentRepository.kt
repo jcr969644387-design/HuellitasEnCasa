@@ -69,8 +69,15 @@ class ContentRepository(private val db: HuellitasDatabase) {
     }
 
     // --- Señales de bienestar ---
-    suspend fun randomScenarios(speciesId: Long, count: Int = 6): List<WellbeingScenarioEntity> =
-        db.wellbeingScenarioDao().getRandomForSpecies(speciesId, count)
+    /**
+     * Escenarios de "¿Qué harías?", excluyendo los que este perfil ya respondió correctamente
+     * antes. Igual que con la comida: salir y volver a entrar no repite lo ya aprendido.
+     */
+    suspend fun randomScenarios(speciesId: Long, userProfileId: Long, count: Int = 6): List<WellbeingScenarioEntity> {
+        val answered = db.scenarioAttemptDao().getCorrectlyAnsweredScenarioIds(userProfileId).toSet()
+        val pool = db.wellbeingScenarioDao().getAllForSpecies(speciesId).filter { it.id !in answered }
+        return pool.shuffled().take(count)
+    }
 
     suspend fun recordScenarioAttempt(
         userProfileId: Long,

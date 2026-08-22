@@ -57,11 +57,11 @@ class WellbeingViewModel(
     private val _feedback = MutableStateFlow<Pair<Boolean, String>?>(null)
     val feedback: StateFlow<Pair<Boolean, String>?> = _feedback
 
-    fun load(petId: Long) {
+    fun load(petId: Long, profileId: Long) {
         viewModelScope.launch {
             val p = petRepo.getPet(petId) ?: return@launch
             _pet.value = p
-            _scenarios.value = contentRepo.randomScenarios(p.speciesId, 6)
+            _scenarios.value = contentRepo.randomScenarios(p.speciesId, profileId, 6)
         }
     }
 
@@ -91,7 +91,7 @@ fun WellbeingScreen(profileId: Long, petId: Long) {
     val index by vm.index.collectAsState()
     val feedback by vm.feedback.collectAsState()
 
-    LaunchedEffect(petId) { vm.load(petId) }
+    LaunchedEffect(petId) { vm.load(petId, profileId) }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Text("Señales de bienestar", style = MaterialTheme.typography.headlineSmall)
@@ -130,6 +130,8 @@ fun WellbeingScreen(profileId: Long, petId: Long) {
             Text("Situación ${index + 1} de ${scenarios.size}", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 10.dp))
         } else if (scenarios.isNotEmpty()) {
             Text("¡Completaste esta ronda de escenarios! Vuelve más tarde para ver situaciones nuevas.", style = MaterialTheme.typography.bodyLarge)
+        } else {
+            Text("¡Ya respondiste bien todas las situaciones de esta especie! Vuelve pronto por más contenido.", style = MaterialTheme.typography.bodyLarge)
         }
     }
 }

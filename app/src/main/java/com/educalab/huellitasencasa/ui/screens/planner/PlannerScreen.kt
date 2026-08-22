@@ -71,8 +71,8 @@ class PlannerViewModel(
     private val progressRepo: ProgressRepository
 ) : ViewModel() {
 
-    private val _selections = MutableStateFlow<Map<DaySlot, CareActionType>>(emptyMap())
-    val selections: StateFlow<Map<DaySlot, CareActionType>> = _selections
+    private val _selections = MutableStateFlow<Map<DaySlot, Set<CareActionType>>>(emptyMap())
+    val selections: StateFlow<Map<DaySlot, Set<CareActionType>>> = _selections
 
     private val _completedSlots = MutableStateFlow<Set<DaySlot>>(emptySet())
     val completedSlots: StateFlow<Set<DaySlot>> = _completedSlots
@@ -90,7 +90,7 @@ class PlannerViewModel(
                         val slot = runCatching { DaySlot.valueOf(item.slot) }.getOrNull() ?: return@mapNotNull null
                         val action = runCatching { CareActionType.valueOf(item.careActionType) }.getOrNull() ?: return@mapNotNull null
                         slot to action
-                    }.toMap()
+                    }.groupBy({ it.first }, { it.second }).mapValues { it.value.toSet() }
                     _completedSlots.value = items
                         .filter { it.isCorrectPlacement }
                         .mapNotNull { runCatching { DaySlot.valueOf(it.slot) }.getOrNull() }
@@ -100,8 +100,10 @@ class PlannerViewModel(
         }
     }
 
-    fun select(slot: DaySlot, action: CareActionType) {
-        _selections.value = _selections.value + (slot to action)
+    fun toggle(slot: DaySlot, action: CareActionType) {
+        val current = _selections.value[slot] ?: emptySet()
+        val updated = if (action in current) current - action else current + action
+        _selections.value = _selections.value + (slot to updated)
     }
 
     fun savePlan(petId: Long, profileId: Long) {
@@ -145,7 +147,7 @@ fun PlannerScreen(profileId: Long, petId: Long) {
     ) {
         Text("Planificador de rutinas", style = MaterialTheme.typography.headlineSmall)
         Text(
-            if (!saved) "Elige qué harás con tu mascota en cada momento del día."
+            if (!saved) "Elige qué harás con tu mascota en cada momento del día. Puedes elegir varias actividades por turno."
             else "Este es tu plan de hoy. ¡Marca cada momento cuando lo cumplas!",
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(bottom = 12.dp)
@@ -154,13 +156,14 @@ fun PlannerScreen(profileId: Long, petId: Long) {
         if (!saved) {
             slots.forEach { slot ->
                 Text(labelForSlot(slot), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 6.dp, bottom = 6.dp))
+                val slotSelections = selections[slot].orEmpty()
                 CareActionType.entries.chunked(3).forEach { row ->
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
                     ) {
                         row.forEach { action ->
-                            val selected = selections[slot] == action
+                            val selected = action in slotSelections
                             Text(
                                 labelFor(action),
                                 style = MaterialTheme.typography.labelMedium,
@@ -168,15 +171,15 @@ fun PlannerScreen(profileId: Long, petId: Long) {
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(20.dp))
                                     .background(if (selected) HuellitasLavender else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                                    .clickable { vm.select(slot, action) }
+                                    .clickable { vm.toggle(slot, action) }
                                     .padding(horizontal = 12.dp, vertical = 8.dp)
                             )
                         }
                     }
                 }
-                selections[slot]?.let {
+                if (slotSelections.size == 1) {
                     Text(
-                        PlannerValidator.tipFor(it),
+                        PlannerValidator.tipFor(slotSelections.first()),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
@@ -186,14 +189,14 @@ fun PlannerScreen(profileId: Long, petId: Long) {
             Spacer(Modifier.height(10.dp))
             Button(
                 onClick = { vm.savePlan(petId, profileId) },
-                enabled = selections.keys.containsAll(slots),
+                enabled = slots.all { selections[it]?.isNotEmpty() == true },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Guardar mi plan de hoy")
             }
         } else {
             slots.forEach { slot ->
-                val action = selections[slot]
+                val actions = selections[slot].orEmpty()
                 val done = slot in completedSlots
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp),
@@ -204,12 +207,15 @@ fun PlannerScreen(profileId: Long, petId: Long) {
                     Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(labelForSlot(slot), style = MaterialTheme.typography.titleMedium)
-                            Text(action?.let { labelFor(it) } ?: "Sin elegir", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                if (actions.isEmpty()) "Sin elegir" else actions.joinToString(", ") { labelFor(it) },
+                                style = MaterialTheme.typography.bodyMedium
+                            )
                         }
                         if (done) {
                             Icon(Icons.Filled.CheckCircle, contentDescription = "Cumplido", tint = HuellitasLeaf)
                         } else {
-                            Button(onClick = { vm.markDone(petId, slot) }, enabled = action != null) {
+                            Button(onClick = { vm.markDone(petId, slot) }, enabled = actions.isNotEmpty()) {
                                 Text("¡Hecho!")
                             }
                         }

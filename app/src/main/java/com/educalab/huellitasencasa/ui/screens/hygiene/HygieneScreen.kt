@@ -1,5 +1,6 @@
 package com.educalab.huellitasencasa.ui.screens.hygiene
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,12 +12,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -192,25 +192,26 @@ fun HygieneScreen(profileId: Long, petId: Long) {
                         if (target == "PET") vm.completeStep(profileId, currentStepIndex)
                     }
                 ) { dragging ->
-                    Card(
-                        shape = RoundedCornerShape(18.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (dragging) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = if (dragging) 8.dp else 1.dp)
+                    // Sin fondo opaco: al arrastrar la herramienta sobre la mascota, esta debe
+                    // seguir viéndose. Solo un aro sutil indica que se está arrastrando.
+                    Box(
+                        modifier = Modifier.size(96.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Column(
-                            modifier = Modifier.padding(14.dp).size(96.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(DrawableCatalog.resolve(step.iconRes)),
-                                contentDescription = step.title,
-                                tint = Color.Unspecified,
-                                modifier = Modifier.size(56.dp)
+                        if (dragging) {
+                            Box(
+                                modifier = Modifier
+                                    .size(84.dp)
+                                    .clip(CircleShape)
+                                    .background(HuellitasSky.copy(alpha = 0.28f))
                             )
                         }
+                        Icon(
+                            painter = painterResource(DrawableCatalog.resolve(step.iconRes)),
+                            contentDescription = step.title,
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(64.dp)
+                        )
                     }
                 }
             }

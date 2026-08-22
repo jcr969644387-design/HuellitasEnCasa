@@ -49,24 +49,28 @@ class CareLogRepository(private val db: HuellitasDatabase) {
     fun observePlanItems(planId: Long): Flow<List<DailyCarePlanItemEntity>> = db.dailyCarePlanDao().observeItems(planId)
 
     /**
-     * Guarda lo que el niño o niña elige hacer en cada franja del día. Reemplaza el plan
-     * de hoy; el campo "is_correct_placement" ahora significa "marcado como cumplido",
-     * no "colocado en el turno correcto": aquí no se califica, se acompaña.
+     * Guarda lo que el niño o niña elige hacer en cada franja del día (puede ser más de una
+     * actividad por franja). Reemplaza el plan de hoy; el campo "is_correct_placement" ahora
+     * significa "marcado como cumplido", no "colocado en el turno correcto": aquí no se
+     * califica, se acompaña.
      */
-    suspend fun savePlanSelections(petId: Long, selections: Map<DaySlot, CareActionType>): DailyCarePlanEntity {
+    suspend fun savePlanSelections(petId: Long, selections: Map<DaySlot, Set<CareActionType>>): DailyCarePlanEntity {
         val plan = getOrCreateTodayPlan(petId)
         val previouslyDone = db.dailyCarePlanDao().getItemsOnce(plan.id)
             .filter { it.isCorrectPlacement }
             .map { it.slot }
             .toSet()
-        val entities = selections.entries.mapIndexed { index, (slot, action) ->
-            DailyCarePlanItemEntity(
-                dailyCarePlanId = plan.id,
-                slot = slot.name,
-                careActionType = action.name,
-                orderIndex = index,
-                isCorrectPlacement = slot.name in previouslyDone
-            )
+        var index = 0
+        val entities = selections.entries.flatMap { (slot, actions) ->
+            actions.map { action ->
+                DailyCarePlanItemEntity(
+                    dailyCarePlanId = plan.id,
+                    slot = slot.name,
+                    careActionType = action.name,
+                    orderIndex = index++,
+                    isCorrectPlacement = slot.name in previouslyDone
+                )
+            }
         }
         db.dailyCarePlanDao().replacePlanItems(plan.id, entities)
         return plan

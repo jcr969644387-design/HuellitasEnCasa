@@ -89,6 +89,9 @@ interface WellbeingScenarioDao {
     @Query("SELECT * FROM wellbeing_scenarios WHERE species_id = :speciesId OR species_id IS NULL ORDER BY RANDOM() LIMIT :limit")
     suspend fun getRandomForSpecies(speciesId: Long, limit: Int): List<WellbeingScenarioEntity>
 
+    @Query("SELECT * FROM wellbeing_scenarios WHERE species_id = :speciesId OR species_id IS NULL")
+    suspend fun getAllForSpecies(speciesId: Long): List<WellbeingScenarioEntity>
+
     @Query("SELECT * FROM wellbeing_scenarios WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): WellbeingScenarioEntity?
 
@@ -109,4 +112,7 @@ interface ScenarioAttemptDao {
 
     @Query("SELECT * FROM scenario_attempts WHERE user_profile_id = :userProfileId AND was_correct = 0 ORDER BY timestamp DESC LIMIT :limit")
     suspend fun getRecentMistakes(userProfileId: Long, limit: Int = 10): List<ScenarioAttemptEntity>
+
+    @Query("SELECT DISTINCT scenario_id FROM scenario_attempts WHERE user_profile_id = :userProfileId AND was_correct = 1")
+    suspend fun getCorrectlyAnsweredScenarioIds(userProfileId: Long): List<Long>
 }

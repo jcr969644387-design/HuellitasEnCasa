@@ -118,12 +118,12 @@ fun ModuleCard(
     modifier: Modifier = Modifier,
     compact: Boolean = false
 ) {
-    val iconBoxSize = if (compact) 38.dp else 52.dp
-    val iconSize = if (compact) 24.dp else 34.dp
-    val cardPadding = if (compact) 10.dp else 14.dp
+    val iconBoxSize = if (compact) 30.dp else 52.dp
+    val iconSize = if (compact) 18.dp else 34.dp
+    val cardPadding = if (compact) 8.dp else 14.dp
     Card(
         modifier = modifier
-            .aspectRatio(if (compact) 1.15f else 0.95f)
+            .aspectRatio(if (compact) 0.8f else 0.95f)
             .clickable(enabled = state != ProgressStateResolver.State.BLOQUEADO, onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = accentColor.copy(alpha = 0.14f)),
         shape = RoundedCornerShape(if (compact) 16.dp else 22.dp)
@@ -151,8 +151,8 @@ fun ModuleCard(
             Spacer(Modifier.height(if (compact) 6.dp else 10.dp))
             Text(
                 title,
-                style = if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
-                maxLines = 1,
+                style = if (compact) MaterialTheme.typography.labelMedium else MaterialTheme.typography.titleMedium,
+                maxLines = if (compact) 2 else 1,
                 overflow = TextOverflow.Ellipsis
             )
             if (!compact) {
