@@ -63,6 +63,9 @@ object DrawableCatalog {
         "item_columpio" -> R.drawable.item_columpio
         "item_bano_arena" -> R.drawable.item_bano_arena
         "item_bandeja_bano" -> R.drawable.item_bandeja_bano
+        "item_ovillo_lana" -> R.drawable.item_ovillo_lana
+        "item_zanahoria" -> R.drawable.item_zanahoria
+        "item_semillas" -> R.drawable.item_semillas
         // Categorías de alimentos
         "food_fruta_verdura" -> R.drawable.food_fruta_verdura
         "food_carne_pescado" -> R.drawable.food_carne_pescado

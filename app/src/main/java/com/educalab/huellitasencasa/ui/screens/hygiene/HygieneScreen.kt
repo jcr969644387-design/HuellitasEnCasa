@@ -143,6 +143,25 @@ fun HygieneScreen(profileId: Long, petId: Long) {
                     .padding(top = 30.dp)
                     .size(170.dp)
             ) {}
+            // Un poco de "suciedad" visible durante el paso de limpiar el espacio, para que
+            // el usuario tenga algo concreto que barrer con la escoba.
+            if (!allDone && currentStepIndex == 2) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 14.dp)
+                ) {
+                    repeat(3) {
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF8D6E52).copy(alpha = 0.55f))
+                        )
+                    }
+                }
+            }
         }
         IndicatorBar("Higiene", currentPet.hygiene, HuellitasSky)
         Spacer(Modifier.height(12.dp))

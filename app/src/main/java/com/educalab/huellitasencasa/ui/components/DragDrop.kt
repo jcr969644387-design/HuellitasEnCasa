@@ -36,10 +36,20 @@ class DropTargetRegistry {
 @Composable
 fun rememberDropTargetRegistry(): DropTargetRegistry = remember { DropTargetRegistry() }
 
-/** Marca un composable como zona donde se pueden soltar tarjetas arrastrables. */
+/**
+ * Marca un composable como zona donde se pueden soltar tarjetas arrastrables. El rectángulo
+ * registrado se infla un poco más allá de los límites visuales reales (25% de su lado menor)
+ * para que soltar una tarjeta "casi" sobre la zona (por ejemplo, un poco por encima del borde)
+ * siga contando como acierto en vez de sentirse como que "no responde".
+ */
 fun Modifier.dropTarget(id: String, registry: DropTargetRegistry): Modifier = this.onGloballyPositioned { coords ->
     val pos = coords.positionInRoot()
-    registry.register(id, Rect(pos, coords.size.toSize()))
+    val size = coords.size.toSize()
+    val margin = minOf(size.width, size.height) * 0.25f
+    registry.register(
+        id,
+        Rect(pos.x - margin, pos.y - margin, pos.x + size.width + margin, pos.y + size.height + margin)
+    )
 }
 
 private fun androidx.compose.ui.unit.IntSize.toSize() = Size(width.toFloat(), height.toFloat())

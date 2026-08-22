@@ -76,8 +76,11 @@ fun PetIllustration(
         val h = this.size.height
         val bob = sin(breath * Math.PI).toFloat() * h * 0.015f
 
-        val bodyCenter = Offset(w / 2f, h * 0.64f + bob)
-        val headCenter = Offset(w / 2f, h * 0.37f + bob)
+        // El conejo necesita más espacio arriba de la cabeza para sus orejas largas: se dibuja
+        // un poco más abajo que las demás especies para que las orejas no se salgan del lienzo.
+        val speciesLift = if (species == SpeciesCode.CONEJO) 0.05f else 0f
+        val bodyCenter = Offset(w / 2f, h * (0.64f + speciesLift) + bob)
+        val headCenter = Offset(w / 2f, h * (0.37f + speciesLift) + bob)
         val bodyRadius = w * 0.29f
         val headRadius = w * 0.3f
 
@@ -118,9 +121,33 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSpeciesAppendag
 ) {
     when (species) {
         SpeciesCode.PERRO -> {
-            // orejas caídas, mas cercanas a la cabeza para no romper la silueta redondeada
-            drawOval(palette.bodyDark, topLeft = Offset(headCenter.x - headRadius * 1.0f, headCenter.y - headRadius * 0.55f), size = Size(headRadius * 0.55f, headRadius * 1.0f))
-            drawOval(palette.bodyDark, topLeft = Offset(headCenter.x + headRadius * 0.45f, headCenter.y - headRadius * 0.55f), size = Size(headRadius * 0.55f, headRadius * 1.0f))
+            // orejas largas y caídas, curvadas hacia afuera para leerse claramente como perro
+            val leftEar = androidx.compose.ui.graphics.Path().apply {
+                moveTo(headCenter.x - headRadius * 0.8f, headCenter.y - headRadius * 0.55f)
+                quadraticBezierTo(
+                    headCenter.x - headRadius * 1.4f, headCenter.y + headRadius * 0.15f,
+                    headCenter.x - headRadius * 0.9f, headCenter.y + headRadius * 0.75f
+                )
+                quadraticBezierTo(
+                    headCenter.x - headRadius * 0.5f, headCenter.y + headRadius * 0.35f,
+                    headCenter.x - headRadius * 0.8f, headCenter.y - headRadius * 0.55f
+                )
+                close()
+            }
+            val rightEar = androidx.compose.ui.graphics.Path().apply {
+                moveTo(headCenter.x + headRadius * 0.8f, headCenter.y - headRadius * 0.55f)
+                quadraticBezierTo(
+                    headCenter.x + headRadius * 1.4f, headCenter.y + headRadius * 0.15f,
+                    headCenter.x + headRadius * 0.9f, headCenter.y + headRadius * 0.75f
+                )
+                quadraticBezierTo(
+                    headCenter.x + headRadius * 0.5f, headCenter.y + headRadius * 0.35f,
+                    headCenter.x + headRadius * 0.8f, headCenter.y - headRadius * 0.55f
+                )
+                close()
+            }
+            drawPath(leftEar, palette.bodyDark)
+            drawPath(rightEar, palette.bodyDark)
         }
         SpeciesCode.GATO -> {
             val p1 = androidx.compose.ui.graphics.Path().apply {
@@ -139,10 +166,12 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSpeciesAppendag
             drawPath(p2, palette.body)
         }
         SpeciesCode.CONEJO -> {
-            drawOval(palette.body, topLeft = Offset(headCenter.x - headRadius * 0.75f, headCenter.y - headRadius * 2.1f), size = Size(headRadius * 0.5f, headRadius * 1.9f))
-            drawOval(palette.body, topLeft = Offset(headCenter.x + headRadius * 0.25f, headCenter.y - headRadius * 2.1f), size = Size(headRadius * 0.5f, headRadius * 1.9f))
-            drawOval(palette.accent, topLeft = Offset(headCenter.x - headRadius * 0.63f, headCenter.y - headRadius * 1.9f), size = Size(headRadius * 0.26f, headRadius * 1.5f))
-            drawOval(palette.accent, topLeft = Offset(headCenter.x + headRadius * 0.37f, headCenter.y - headRadius * 1.9f), size = Size(headRadius * 0.26f, headRadius * 1.5f))
+            // orejas más cortas que quepan dentro del lienzo (junto con speciesLift arriba),
+            // para que no se corten ni se salgan de su recuadro en pantalla
+            drawOval(palette.body, topLeft = Offset(headCenter.x - headRadius * 0.75f, headCenter.y - headRadius * 1.25f), size = Size(headRadius * 0.5f, headRadius * 1.15f))
+            drawOval(palette.body, topLeft = Offset(headCenter.x + headRadius * 0.25f, headCenter.y - headRadius * 1.25f), size = Size(headRadius * 0.5f, headRadius * 1.15f))
+            drawOval(palette.accent, topLeft = Offset(headCenter.x - headRadius * 0.63f, headCenter.y - headRadius * 1.05f), size = Size(headRadius * 0.26f, headRadius * 0.85f))
+            drawOval(palette.accent, topLeft = Offset(headCenter.x + headRadius * 0.37f, headCenter.y - headRadius * 1.05f), size = Size(headRadius * 0.26f, headRadius * 0.85f))
         }
         SpeciesCode.HAMSTER -> {
             drawCircle(palette.bodyDark, radius = headRadius * 0.35f, center = Offset(headCenter.x - headRadius * 0.75f, headCenter.y - headRadius * 0.65f))
@@ -187,7 +216,13 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSpeciesSnout(
 ) {
     when (species) {
         SpeciesCode.PERRO -> {
-            drawCircle(Color(0xFF2E241D), radius = headRadius * 0.065f, center = Offset(headCenter.x, headCenter.y + headRadius * 0.28f))
+            // hocico/morro claro para leerse como perro y no como una cabeza lisa
+            drawOval(
+                color = Color(0xFFFFF3EA),
+                topLeft = Offset(headCenter.x - headRadius * 0.32f, headCenter.y + headRadius * 0.05f),
+                size = Size(headRadius * 0.64f, headRadius * 0.46f)
+            )
+            drawCircle(Color(0xFF2E241D), radius = headRadius * 0.075f, center = Offset(headCenter.x, headCenter.y + headRadius * 0.2f))
         }
         SpeciesCode.GATO -> {
             val nose = androidx.compose.ui.graphics.Path().apply {
