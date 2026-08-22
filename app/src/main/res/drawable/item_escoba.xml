@@ -1,0 +1,20 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="64dp"
+    android:height="64dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+    <!-- Mango -->
+    <path
+        android:pathData="M40,6 L28,38"
+        android:strokeColor="#B5651D"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"/>
+    <!-- Atado -->
+    <path android:pathData="M22,34 L34,34 L36,42 L20,42 Z" android:fillColor="#8D5B3A"/>
+    <!-- Cerdas -->
+    <path android:pathData="M20,42 L36,42 L40,58 L16,58 Z" android:fillColor="#FFC93C"/>
+    <path android:pathData="M22,44 L21,57" android:strokeColor="#E0A93C" android:strokeWidth="1.6" android:fillColor="#00000000"/>
+    <path android:pathData="M28,44 L27,58" android:strokeColor="#E0A93C" android:strokeWidth="1.6" android:fillColor="#00000000"/>
+    <path android:pathData="M34,44 L34,58" android:strokeColor="#E0A93C" android:strokeWidth="1.6" android:fillColor="#00000000"/>
+</vector>

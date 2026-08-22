@@ -50,6 +50,10 @@ object DrawableCatalog {
         "item_juguete_pelota" -> R.drawable.item_juguete_pelota
         "item_cepillo" -> R.drawable.item_cepillo
         "item_correa" -> R.drawable.item_correa
+        "item_lupa" -> R.drawable.item_lupa
+        "item_escoba" -> R.drawable.item_escoba
+        "item_mesa" -> R.drawable.item_mesa
+        "item_silla" -> R.drawable.item_silla
         "item_planta_interior" -> R.drawable.item_planta_interior
         "item_ventana_luz" -> R.drawable.item_ventana_luz
         // Categorías de alimentos

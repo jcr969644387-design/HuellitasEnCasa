@@ -22,7 +22,7 @@ import com.educalab.huellitasencasa.domain.model.SpeciesCode
 import kotlin.math.sin
 
 /** Estado de ánimo visual de la mascota, derivado del bienestar general (no de un diagnóstico). */
-enum class PetMood { FELIZ, NEUTRAL, CANSADO, HAMBRIENTO }
+enum class PetMood { FELIZ, NEUTRAL, CANSADO, HAMBRIENTO, DORMIDO }
 
 private data class SpeciesPalette(val body: Color, val bodyDark: Color, val accent: Color)
 
@@ -249,9 +249,9 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawFace(
 
     when (mood) {
         PetMood.FELIZ -> {
-            // ojos en forma de "^" felices
-            drawArcEye(Offset(headCenter.x - eyeDx, eyeY), headRadius * 0.22f, eyeColor)
-            drawArcEye(Offset(headCenter.x + eyeDx, eyeY), headRadius * 0.22f, eyeColor)
+            // ojos abiertos (con parpadeo) para que se distingan claramente de cuando duerme
+            drawBlinkingEye(Offset(headCenter.x - eyeDx, eyeY), headRadius * 0.1f, blink, eyeColor)
+            drawBlinkingEye(Offset(headCenter.x + eyeDx, eyeY), headRadius * 0.1f, blink, eyeColor)
             drawArc(
                 color = eyeColor, startAngle = 20f, sweepAngle = 140f, useCenter = false,
                 topLeft = Offset(headCenter.x - headRadius * 0.28f, headCenter.y + headRadius * 0.05f),
@@ -289,17 +289,30 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawFace(
                 size = Size(headRadius * 0.32f, headRadius * 0.34f)
             )
         }
+        PetMood.DORMIDO -> {
+            // ojos cerrados y relajados, con "zzz" flotando: el contraste con los ojos abiertos
+            // de FELIZ/NEUTRAL es lo que hace notorio que la mascota está durmiendo.
+            drawLine(eyeColor, Offset(headCenter.x - eyeDx - headRadius * 0.12f, eyeY), Offset(headCenter.x - eyeDx + headRadius * 0.12f, eyeY), strokeWidth = headRadius * 0.07f, cap = StrokeCap.Round)
+            drawLine(eyeColor, Offset(headCenter.x + eyeDx - headRadius * 0.12f, eyeY), Offset(headCenter.x + eyeDx + headRadius * 0.12f, eyeY), strokeWidth = headRadius * 0.07f, cap = StrokeCap.Round)
+            drawLine(
+                eyeColor,
+                start = Offset(headCenter.x - headRadius * 0.08f, headCenter.y + headRadius * 0.32f),
+                end = Offset(headCenter.x + headRadius * 0.08f, headCenter.y + headRadius * 0.32f),
+                strokeWidth = headRadius * 0.05f,
+                cap = StrokeCap.Round
+            )
+            drawSleepZ(Offset(headCenter.x + headRadius * 0.95f, headCenter.y - headRadius * 0.55f), headRadius * 0.12f, 0.9f, eyeColor)
+            drawSleepZ(Offset(headCenter.x + headRadius * 1.25f, headCenter.y - headRadius * 0.95f), headRadius * 0.08f, 0.6f, eyeColor)
+        }
     }
 }
 
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawArcEye(center: Offset, r: Float, color: Color) {
-    drawArc(
-        color = color,
-        startAngle = 200f,
-        sweepAngle = 140f,
-        useCenter = false,
-        topLeft = Offset(center.x - r, center.y - r * 0.6f),
-        size = Size(r * 2f, r * 1.2f),
-        style = Stroke(width = r * 0.35f, cap = StrokeCap.Round)
-    )
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawSleepZ(center: Offset, size: Float, alpha: Float, color: Color) {
+    val path = androidx.compose.ui.graphics.Path().apply {
+        moveTo(center.x - size, center.y - size)
+        lineTo(center.x + size, center.y - size)
+        lineTo(center.x - size, center.y + size)
+        lineTo(center.x + size, center.y + size)
+    }
+    drawPath(path, color = color.copy(alpha = alpha), style = Stroke(width = size * 0.4f, cap = StrokeCap.Round))
 }

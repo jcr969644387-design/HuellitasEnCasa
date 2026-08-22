@@ -55,6 +55,18 @@ object SeedHomeItems {
             iconRes = "item_ventana_luz",
             description = "La luz natural regula el ritmo de sueño y actividad de la mascota.",
             compatibleSpeciesCsv = ALL
+        ),
+        HomeItemEntity(
+            category = "ENTORNO", name = "Mesa baja",
+            iconRes = "item_mesa",
+            description = "Un mueble bajo y estable; útil para dejar cerca los cuidados diarios.",
+            compatibleSpeciesCsv = ALL
+        ),
+        HomeItemEntity(
+            category = "ENTORNO", name = "Silla cómoda",
+            iconRes = "item_silla",
+            description = "Un rincón tranquilo donde la familia puede acompañar a la mascota.",
+            compatibleSpeciesCsv = ALL
         )
     )
 }

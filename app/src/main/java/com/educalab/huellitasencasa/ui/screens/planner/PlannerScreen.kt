@@ -1,5 +1,7 @@
 package com.educalab.huellitasencasa.ui.screens.planner
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,13 +10,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,8 +28,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -33,11 +41,9 @@ import com.educalab.huellitasencasa.data.repository.ProgressRepository
 import com.educalab.huellitasencasa.domain.logic.PlannerValidator
 import com.educalab.huellitasencasa.domain.model.CareActionType
 import com.educalab.huellitasencasa.domain.model.DaySlot
-import com.educalab.huellitasencasa.ui.components.DraggableCard
-import com.educalab.huellitasencasa.ui.components.DropZoneBox
-import com.educalab.huellitasencasa.ui.components.DropZoneState
 import com.educalab.huellitasencasa.ui.components.TipBubble
-import com.educalab.huellitasencasa.ui.components.rememberDropTargetRegistry
+import com.educalab.huellitasencasa.ui.theme.HuellitasLavender
+import com.educalab.huellitasencasa.ui.theme.HuellitasLeaf
 import com.educalab.huellitasencasa.util.AppViewModelFactory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -65,31 +71,56 @@ class PlannerViewModel(
     private val progressRepo: ProgressRepository
 ) : ViewModel() {
 
-    private val _placements = MutableStateFlow<Map<CareActionType, DaySlot>>(emptyMap())
-    val placements: StateFlow<Map<CareActionType, DaySlot>> = _placements
+    private val _selections = MutableStateFlow<Map<DaySlot, CareActionType>>(emptyMap())
+    val selections: StateFlow<Map<DaySlot, CareActionType>> = _selections
 
-    private val _result = MutableStateFlow<PlannerValidator.ValidationResult?>(null)
-    val result: StateFlow<PlannerValidator.ValidationResult?> = _result
+    private val _completedSlots = MutableStateFlow<Set<DaySlot>>(emptySet())
+    val completedSlots: StateFlow<Set<DaySlot>> = _completedSlots
 
-    fun place(actionType: CareActionType, slot: DaySlot) {
-        _placements.value = _placements.value + (actionType to slot)
-    }
+    private val _saved = MutableStateFlow(false)
+    val saved: StateFlow<Boolean> = _saved
 
-    fun submit(profileId: Long, petId: Long) {
+    fun load(petId: Long) {
         viewModelScope.launch {
             val plan = careLogRepo.getOrCreateTodayPlan(petId)
-            val items = _placements.value.map { (action, slot) -> PlannerValidator.PlanItem(slot, action) }
-            val result = careLogRepo.submitPlan(plan, items)
-            _result.value = result
-            if (result.isPlanApproved) {
-                progressRepo.registerEvent(profileId, "PLANIFICADOR", 1)
+            careLogRepo.observePlanItems(plan.id).collect { items ->
+                if (items.isNotEmpty()) {
+                    _saved.value = true
+                    _selections.value = items.mapNotNull { item ->
+                        val slot = runCatching { DaySlot.valueOf(item.slot) }.getOrNull() ?: return@mapNotNull null
+                        val action = runCatching { CareActionType.valueOf(item.careActionType) }.getOrNull() ?: return@mapNotNull null
+                        slot to action
+                    }.toMap()
+                    _completedSlots.value = items
+                        .filter { it.isCorrectPlacement }
+                        .mapNotNull { runCatching { DaySlot.valueOf(it.slot) }.getOrNull() }
+                        .toSet()
+                }
             }
         }
     }
 
-    fun reset() {
-        _placements.value = emptyMap()
-        _result.value = null
+    fun select(slot: DaySlot, action: CareActionType) {
+        _selections.value = _selections.value + (slot to action)
+    }
+
+    fun savePlan(petId: Long, profileId: Long) {
+        viewModelScope.launch {
+            careLogRepo.savePlanSelections(petId, _selections.value)
+            _saved.value = true
+            progressRepo.registerEvent(profileId, "PLANIFICADOR", 1)
+        }
+    }
+
+    fun markDone(petId: Long, slot: DaySlot) {
+        viewModelScope.launch {
+            careLogRepo.markPlanSlotDone(petId, slot)
+            _completedSlots.value = _completedSlots.value + slot
+        }
+    }
+
+    fun editPlan() {
+        _saved.value = false
     }
 }
 
@@ -98,71 +129,101 @@ fun PlannerScreen(profileId: Long, petId: Long) {
     val context = LocalContext.current
     val app = context.applicationContext as HuellitasApplication
     val vm: PlannerViewModel = viewModel(factory = AppViewModelFactory(app) { PlannerViewModel(app.careLogRepository, app.progressRepository) })
-    val placements by vm.placements.collectAsState()
-    val result by vm.result.collectAsState()
+    val selections by vm.selections.collectAsState()
+    val completedSlots by vm.completedSlots.collectAsState()
+    val saved by vm.saved.collectAsState()
 
-    val registry = rememberDropTargetRegistry()
-    val pendingActions = CareActionType.entries.filter { it !in placements.keys }
+    LaunchedEffect(petId) { vm.load(petId) }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    val slots = listOf(DaySlot.MANANA, DaySlot.TARDE, DaySlot.NOCHE)
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
         Text("Planificador de rutinas", style = MaterialTheme.typography.headlineSmall)
-        Text("Arrastra cada tarjeta a la franja del día donde encaje mejor.", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(bottom = 10.dp))
+        Text(
+            if (!saved) "Elige qué harás con tu mascota en cada momento del día."
+            else "Este es tu plan de hoy. ¡Marca cada momento cuando lo cumplas!",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
 
-        result?.let {
-            TipBubble(
-                if (it.isPlanApproved) "¡Gran plan! Acertaste ${it.correctCount} de ${it.totalCount} tarjetas."
-                else "Acertaste ${it.correctCount} de ${it.totalCount}. Puedes reorganizar y volver a intentarlo.",
-                modifier = Modifier.padding(bottom = 10.dp)
-            )
-        }
-
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(DaySlot.MANANA, DaySlot.TARDE, DaySlot.NOCHE).forEach { slot ->
-                val filled = placements.any { it.value == slot }
-                DropZoneBox(
-                    id = slot.name,
-                    registry = registry,
-                    state = if (filled) DropZoneState.LLENA else DropZoneState.VACIA,
-                    modifier = Modifier.weight(1f).height(140.dp)
+        if (!saved) {
+            slots.forEach { slot ->
+                Text(labelForSlot(slot), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 6.dp, bottom = 6.dp))
+                CareActionType.entries.chunked(3).forEach { row ->
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                    ) {
+                        row.forEach { action ->
+                            val selected = selections[slot] == action
+                            Text(
+                                labelFor(action),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(20.dp))
+                                    .background(if (selected) HuellitasLavender else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                    .clickable { vm.select(slot, action) }
+                                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                            )
+                        }
+                    }
+                }
+                selections[slot]?.let {
+                    Text(
+                        PlannerValidator.tipFor(it),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
+                    )
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+            Button(
+                onClick = { vm.savePlan(petId, profileId) },
+                enabled = selections.keys.containsAll(slots),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Guardar mi plan de hoy")
+            }
+        } else {
+            slots.forEach { slot ->
+                val action = selections[slot]
+                val done = slot in completedSlots
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 5.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (done) HuellitasLeaf.copy(alpha = 0.16f) else MaterialTheme.colorScheme.surface
+                    )
                 ) {
-                    Column(modifier = Modifier.padding(6.dp)) {
-                        Text(labelForSlot(slot), style = MaterialTheme.typography.labelLarge)
-                        placements.filterValues { it == slot }.keys.forEach { action ->
-                            Text("• ${labelFor(action)}", style = MaterialTheme.typography.labelMedium)
+                    Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(labelForSlot(slot), style = MaterialTheme.typography.titleMedium)
+                            Text(action?.let { labelFor(it) } ?: "Sin elegir", style = MaterialTheme.typography.bodyMedium)
+                        }
+                        if (done) {
+                            Icon(Icons.Filled.CheckCircle, contentDescription = "Cumplido", tint = HuellitasLeaf)
+                        } else {
+                            Button(onClick = { vm.markDone(petId, slot) }, enabled = action != null) {
+                                Text("¡Hecho!")
+                            }
                         }
                     }
                 }
             }
-        }
-
-        Spacer(Modifier.height(14.dp))
-        Text("Tarjetas de cuidado", style = MaterialTheme.typography.titleMedium)
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(vertical = 8.dp)) {
-            items(pendingActions) { action ->
-                DraggableCard(
-                    registry = registry,
-                    onDropped = { targetId ->
-                        val slot = targetId?.let { runCatching { DaySlot.valueOf(it) }.getOrNull() }
-                        if (slot != null) vm.place(action, slot)
-                    }
-                ) { _ ->
-                    Card(shape = RoundedCornerShape(14.dp)) {
-                        Text(
-                            labelFor(action),
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-                            style = MaterialTheme.typography.labelLarge
-                        )
-                    }
-                }
+            if (completedSlots.size == slots.size) {
+                Spacer(Modifier.height(10.dp))
+                TipBubble("¡Cumpliste todo tu plan de hoy! Eso ayuda muchísimo al bienestar de tu mascota.")
             }
-        }
-
-        Spacer(Modifier.height(10.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Button(onClick = { vm.submit(profileId, petId) }, enabled = placements.isNotEmpty(), modifier = Modifier.weight(1f)) {
-                Text("Validar plan")
+            Spacer(Modifier.height(14.dp))
+            OutlinedButton(onClick = { vm.editPlan() }, modifier = Modifier.fillMaxWidth()) {
+                Text("Cambiar mi plan")
             }
-            androidx.compose.material3.OutlinedButton(onClick = { vm.reset() }, modifier = Modifier.weight(1f)) { Text("Reiniciar") }
         }
     }
 }

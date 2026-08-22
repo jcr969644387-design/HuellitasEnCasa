@@ -63,7 +63,11 @@ class ActivityViewModel(
     val feedback: StateFlow<String?> = _feedback
 
     fun load(petId: Long) {
-        viewModelScope.launch { petRepo.observePet(petId).collect { if (it != null) _pet.value = it } }
+        viewModelScope.launch {
+            val decayed = petRepo.getPet(petId)?.let { petRepo.applySessionDecayIfNeeded(it) }
+            _pet.value = decayed
+            petRepo.observePet(petId).collect { if (it != null) _pet.value = it }
+        }
     }
 
     fun play(profileId: Long) = act(profileId, NeedType.ACTIVIDAD, "JUGAR", 16, "¡Le encantó jugar!")

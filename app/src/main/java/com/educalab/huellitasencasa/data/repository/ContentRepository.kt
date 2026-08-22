@@ -12,8 +12,15 @@ import com.educalab.huellitasencasa.domain.logic.ScenarioGrader
 class ContentRepository(private val db: HuellitasDatabase) {
 
     // --- Alimentación / clasificación ---
-    suspend fun randomFoodCards(speciesId: Long, count: Int = 10): List<FoodItemEntity> =
-        db.foodItemDao().getRandomForSpecies(speciesId, count)
+    /**
+     * Tarjetas para "Clasifica y Cuida", excluyendo las que este perfil ya respondió
+     * correctamente antes. Así, salir y volver a entrar no repite lo ya aprendido.
+     */
+    suspend fun randomFoodCards(speciesId: Long, userProfileId: Long, count: Int = 10): List<FoodItemEntity> {
+        val answered = db.foodAttemptDao().getCorrectlyAnsweredItemIds(userProfileId).toSet()
+        val pool = db.foodItemDao().getAllForSpecies(speciesId).filter { it.id !in answered }
+        return pool.shuffled().take(count)
+    }
 
     /**
      * Alimentos realmente recomendados para la especie (categoría ALIMENTO_BUENO únicamente,

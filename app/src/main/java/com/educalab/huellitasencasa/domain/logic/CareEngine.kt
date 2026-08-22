@@ -13,7 +13,7 @@ object CareEngine {
     /** Piso protector: la mascota nunca aparece en un estado crítico solo por el paso del tiempo. */
     const val PROTECTED_FLOOR = 15
     /** Cada cuánto tiempo real puede volver a aplicarse el descenso suave (no punitivo). */
-    const val DECAY_INTERVAL_MILLIS = 2L * 60L * 60L * 1000L
+    const val DECAY_INTERVAL_MILLIS = 20L * 60L * 1000L
 
     fun clamp(value: Int): Int = value.coerceIn(MIN_VALUE, MAX_VALUE)
 

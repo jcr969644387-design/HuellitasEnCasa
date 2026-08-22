@@ -65,6 +65,9 @@ interface DailyCarePlanDao {
     @Query("SELECT * FROM daily_care_plan_items WHERE daily_care_plan_id = :planId ORDER BY order_index ASC")
     fun observeItems(planId: Long): Flow<List<DailyCarePlanItemEntity>>
 
+    @Query("SELECT * FROM daily_care_plan_items WHERE daily_care_plan_id = :planId ORDER BY order_index ASC")
+    suspend fun getItemsOnce(planId: Long): List<DailyCarePlanItemEntity>
+
     @Query("SELECT * FROM daily_care_plans WHERE virtual_pet_id = :petId ORDER BY date_epoch_day DESC")
     fun observePlansForPet(petId: Long): Flow<List<DailyCarePlanEntity>>
 

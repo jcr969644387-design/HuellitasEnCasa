@@ -90,13 +90,15 @@ class FeedingViewModel(
     private val _preferredFoods = MutableStateFlow<List<FoodItemEntity>>(emptyList())
     val preferredFoods: StateFlow<List<FoodItemEntity>> = _preferredFoods
 
-    fun load(petId: Long) {
+    fun load(petId: Long, profileId: Long) {
         viewModelScope.launch {
+            val decayed = petRepo.getPet(petId)?.let { petRepo.applySessionDecayIfNeeded(it) }
+            _pet.value = decayed
             petRepo.observePet(petId).collect { p -> if (p != null) _pet.value = p }
         }
         viewModelScope.launch {
             val p = petRepo.getPet(petId) ?: return@launch
-            _cards.value = contentRepo.randomFoodCards(p.speciesId, 10)
+            _cards.value = contentRepo.randomFoodCards(p.speciesId, profileId, 10)
             _preferredFoods.value = contentRepo.preferredFoodsFor(p.speciesId, 4)
         }
     }
@@ -136,7 +138,7 @@ fun FeedingScreen(profileId: Long, petId: Long) {
     val feedback by vm.feedback.collectAsState()
     val preferredFoods by vm.preferredFoods.collectAsState()
 
-    LaunchedEffect(petId) { vm.load(petId) }
+    LaunchedEffect(petId) { vm.load(petId, profileId) }
     val currentPet = pet ?: return
 
     var speciesCode by remember { mutableStateOf(SpeciesCode.PERRO) }
@@ -256,6 +258,8 @@ fun FeedingScreen(profileId: Long, petId: Long) {
             Text("Tarjeta ${index + 1} de ${cards.size}", style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = 8.dp))
         } else if (cards.isNotEmpty()) {
             Text("¡Completaste esta ronda de clasificación! Vuelve más tarde para practicar de nuevo.", style = MaterialTheme.typography.bodyLarge)
+        } else {
+            Text("¡Ya respondiste bien todas las tarjetas de esta especie! Vuelve pronto por más contenido.", style = MaterialTheme.typography.bodyLarge)
         }
     }
 }

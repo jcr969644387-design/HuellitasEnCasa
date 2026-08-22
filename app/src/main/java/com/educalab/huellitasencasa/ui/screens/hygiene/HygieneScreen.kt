@@ -1,7 +1,7 @@
 package com.educalab.huellitasencasa.ui.screens.hygiene
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,12 +10,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -30,7 +29,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -41,22 +43,28 @@ import com.educalab.huellitasencasa.data.repository.PetRepository
 import com.educalab.huellitasencasa.data.repository.ProgressRepository
 import com.educalab.huellitasencasa.domain.model.NeedType
 import com.educalab.huellitasencasa.domain.model.SpeciesCode
+import com.educalab.huellitasencasa.ui.components.DraggableCard
+import com.educalab.huellitasencasa.ui.components.DropZoneBox
+import com.educalab.huellitasencasa.ui.components.DropZoneState
 import com.educalab.huellitasencasa.ui.components.IndicatorBar
 import com.educalab.huellitasencasa.ui.components.PetMood
 import com.educalab.huellitasencasa.ui.components.PetSceneCard
 import com.educalab.huellitasencasa.ui.components.TipBubble
+import com.educalab.huellitasencasa.ui.components.rememberDropTargetRegistry
+import com.educalab.huellitasencasa.ui.theme.HuellitasLeaf
 import com.educalab.huellitasencasa.ui.theme.HuellitasSky
 import com.educalab.huellitasencasa.util.AppViewModelFactory
+import com.educalab.huellitasencasa.util.DrawableCatalog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-private data class HygieneStep(val title: String, val description: String, val delta: Int)
+private data class HygieneStep(val title: String, val description: String, val delta: Int, val iconRes: String)
 
 private val steps = listOf(
-    HygieneStep("Revisar el pelaje o plumaje", "Comprueba que no haya nudos, suciedad ni heridas visibles.", 6),
-    HygieneStep("Cepillar con cuidado", "Un cepillado suave elimina pelo suelto y fortalece el vínculo.", 8),
-    HygieneStep("Limpiar su espacio", "Un espacio limpio evita malos olores y enfermedades.", 8)
+    HygieneStep("Revisar el pelaje o plumaje", "Comprueba que no haya nudos, suciedad ni heridas visibles.", 6, "item_lupa"),
+    HygieneStep("Cepillar con cuidado", "Un cepillado suave elimina pelo suelto y fortalece el vínculo.", 8, "item_cepillo"),
+    HygieneStep("Limpiar su espacio", "Un espacio limpio evita malos olores y enfermedades.", 8, "item_escoba")
 )
 
 class HygieneViewModel(
@@ -74,7 +82,11 @@ class HygieneViewModel(
     val feedback: StateFlow<String?> = _feedback
 
     fun load(petId: Long) {
-        viewModelScope.launch { petRepo.observePet(petId).collect { if (it != null) _pet.value = it } }
+        viewModelScope.launch {
+            val decayed = petRepo.getPet(petId)?.let { petRepo.applySessionDecayIfNeeded(it) }
+            _pet.value = decayed
+            petRepo.observePet(petId).collect { if (it != null) _pet.value = it }
+        }
     }
 
     fun completeStep(profileId: Long, index: Int) {
@@ -108,6 +120,10 @@ fun HygieneScreen(profileId: Long, petId: Long) {
         }
     }
     val mood = if (currentPet.hygiene >= 60) PetMood.FELIZ else PetMood.NEUTRAL
+    val registry = rememberDropTargetRegistry()
+    var hoveringPet by remember { mutableStateOf(false) }
+    val currentStepIndex = completed.size
+    val allDone = currentStepIndex >= steps.size
 
     Column(
         modifier = Modifier
@@ -117,42 +133,89 @@ fun HygieneScreen(profileId: Long, petId: Long) {
     ) {
         Text("Higiene", style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(8.dp))
-        PetSceneCard(species = speciesCode, mood = mood, accent = HuellitasSky, modifier = Modifier.padding(bottom = 12.dp))
+        PetSceneCard(species = speciesCode, mood = mood, accent = HuellitasSky, modifier = Modifier.padding(bottom = 12.dp)) {
+            DropZoneBox(
+                id = "PET",
+                registry = registry,
+                state = if (hoveringPet) DropZoneState.RESALTADA else DropZoneState.VACIA,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 30.dp)
+                    .size(170.dp)
+            ) {}
+        }
         IndicatorBar("Higiene", currentPet.hygiene, HuellitasSky)
         Spacer(Modifier.height(12.dp))
-        Text("Sigue los pasos en orden para un buen aseo:", style = MaterialTheme.typography.bodyMedium)
-        Spacer(Modifier.height(8.dp))
-        feedback?.let { TipBubble(it, modifier = Modifier.padding(bottom = 10.dp)) }
 
-        steps.forEachIndexed { index, step ->
-            val done = index in completed
-            val enabled = index == 0 || (index - 1) in completed
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 5.dp)
-                    .clickable(enabled = enabled && !done) { vm.completeStep(profileId, index) },
-                colors = CardDefaults.cardColors(
-                    containerColor = if (done) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface
-                )
-            ) {
-                Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+        // Progreso de los 3 pasos del día (lupa, cepillo, escoba)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 8.dp)) {
+            steps.forEachIndexed { index, step ->
+                val done = index in completed
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = if (!done && index != currentStepIndex) Modifier.alpha(0.35f) else Modifier
+                ) {
                     Icon(
-                        imageVector = if (done) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
-                        contentDescription = null,
-                        tint = if (done) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.outline
+                        painter = painterResource(DrawableCatalog.resolve(step.iconRes)),
+                        contentDescription = step.title,
+                        tint = Color.Unspecified,
+                        modifier = Modifier.size(22.dp)
                     )
-                    Spacer(Modifier.width(10.dp))
-                    Column {
-                        Text("${index + 1}. ${step.title}", style = MaterialTheme.typography.titleMedium)
-                        if (!enabled) Text("Completa el paso anterior primero", style = MaterialTheme.typography.labelMedium)
+                    if (done) {
+                        Icon(
+                            imageVector = Icons.Filled.CheckCircle,
+                            contentDescription = "Completado",
+                            tint = HuellitasLeaf,
+                            modifier = Modifier.size(14.dp)
+                        )
                     }
                 }
             }
         }
 
-        if (completed.size == steps.size) {
-            Spacer(Modifier.height(12.dp))
+        feedback?.let { TipBubble(it, modifier = Modifier.padding(bottom = 10.dp)) }
+
+        if (!allDone) {
+            val step = steps[currentStepIndex]
+            Text("Paso ${currentStepIndex + 1} de ${steps.size}: ${step.title}", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Arrastra la herramienta hasta ${currentPet.name} para completar este paso.",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(bottom = 10.dp)
+            )
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                DraggableCard(
+                    registry = registry,
+                    onDragging = { pos -> hoveringPet = registry.hitTest(pos) == "PET" },
+                    onDropped = { target ->
+                        hoveringPet = false
+                        if (target == "PET") vm.completeStep(profileId, currentStepIndex)
+                    }
+                ) { dragging ->
+                    Card(
+                        shape = RoundedCornerShape(18.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (dragging) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = if (dragging) 8.dp else 1.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(14.dp).size(96.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(DrawableCatalog.resolve(step.iconRes)),
+                                contentDescription = step.title,
+                                tint = Color.Unspecified,
+                                modifier = Modifier.size(56.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        } else {
+            Spacer(Modifier.height(4.dp))
             Text("¡Rutina de higiene completa! ${currentPet.name} está reluciente. ✨", style = MaterialTheme.typography.titleMedium)
         }
     }

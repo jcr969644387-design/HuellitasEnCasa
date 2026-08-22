@@ -20,11 +20,11 @@ interface FoodItemDao {
     @Query("SELECT * FROM food_items ORDER BY id ASC")
     fun observeAll(): Flow<List<FoodItemEntity>>
 
-    @Query("SELECT * FROM food_items WHERE species_id = :speciesId OR species_id IS NULL ORDER BY RANDOM() LIMIT :limit")
-    suspend fun getRandomForSpecies(speciesId: Long, limit: Int): List<FoodItemEntity>
-
     @Query("SELECT * FROM food_items WHERE (species_id = :speciesId OR species_id IS NULL) AND category = 'ALIMENTO_BUENO'")
     suspend fun getGoodFoodsForSpecies(speciesId: Long): List<FoodItemEntity>
+
+    @Query("SELECT * FROM food_items WHERE species_id = :speciesId OR species_id IS NULL")
+    suspend fun getAllForSpecies(speciesId: Long): List<FoodItemEntity>
 
     @Query("SELECT COUNT(*) FROM food_items")
     suspend fun count(): Int
@@ -40,6 +40,9 @@ interface FoodAttemptDao {
 
     @Query("SELECT COUNT(*) FROM food_attempts WHERE user_profile_id = :userProfileId")
     suspend fun countAll(userProfileId: Long): Int
+
+    @Query("SELECT DISTINCT food_item_id FROM food_attempts WHERE user_profile_id = :userProfileId AND was_correct = 1")
+    suspend fun getCorrectlyAnsweredItemIds(userProfileId: Long): List<Long>
 
     @Query("SELECT * FROM food_attempts WHERE user_profile_id = :userProfileId ORDER BY timestamp DESC LIMIT :limit")
     fun observeRecent(userProfileId: Long, limit: Int = 10): Flow<List<FoodAttemptEntity>>

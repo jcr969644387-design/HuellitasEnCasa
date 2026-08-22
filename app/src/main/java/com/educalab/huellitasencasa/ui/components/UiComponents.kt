@@ -115,24 +115,28 @@ fun ModuleCard(
     accentColor: Color,
     state: ProgressStateResolver.State,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    compact: Boolean = false
 ) {
+    val iconBoxSize = if (compact) 38.dp else 52.dp
+    val iconSize = if (compact) 24.dp else 34.dp
+    val cardPadding = if (compact) 10.dp else 14.dp
     Card(
         modifier = modifier
-            .aspectRatio(0.95f)
+            .aspectRatio(if (compact) 1.15f else 0.95f)
             .clickable(enabled = state != ProgressStateResolver.State.BLOQUEADO, onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = accentColor.copy(alpha = 0.14f)),
-        shape = RoundedCornerShape(22.dp)
+        shape = RoundedCornerShape(if (compact) 16.dp else 22.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(cardPadding),
             horizontalAlignment = Alignment.Start
         ) {
             Box(
                 modifier = Modifier
-                    .size(52.dp)
+                    .size(iconBoxSize)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surface),
                 contentAlignment = Alignment.Center
@@ -140,16 +144,23 @@ fun ModuleCard(
                 Icon(
                     painter = painterResource(DrawableCatalog.resolve(iconRes)),
                     contentDescription = title,
-                    modifier = Modifier.size(34.dp),
+                    modifier = Modifier.size(iconSize),
                     tint = Color.Unspecified
                 )
             }
-            Spacer(Modifier.height(10.dp))
-            Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(subtitle, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.height(if (compact) 6.dp else 10.dp))
+            Text(
+                title,
+                style = if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            if (!compact) {
+                Text(subtitle, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             Spacer(Modifier.weight(1f, fill = false))
-            Spacer(Modifier.height(8.dp))
-            ProgressStateChip(state)
+            Spacer(Modifier.height(if (compact) 4.dp else 8.dp))
+            if (!compact) ProgressStateChip(state)
         }
     }
 }
